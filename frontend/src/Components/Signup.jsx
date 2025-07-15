@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import useAuthUser from "../context/AuthUser";
+import useAuthStore from '../store/useAuthStore';
 
 const Signup = () => {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
     const [department, setDepartment] = useState("");
     const [employeeId, setEmployeeId] = useState("");
     const [errors, setErrors] = useState("");
-
     const navigate = useNavigate();
-    const { fetchUser, authUser } = useAuthUser();
+    const setUser = useAuthStore((state) => state.setUser);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -40,7 +40,7 @@ const Signup = () => {
             });
             const data = await response.json();
             if (response.ok) {
-                await fetchUser(); // Automatically log in after signup
+                setUser(data.user); // Store user in Zustand
                 // Redirect based on role (handled by App.jsx)
                 // Optionally, show a message here
             } else {

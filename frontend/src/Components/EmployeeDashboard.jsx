@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import useAuthUser from '../context/AuthUser.jsx';
+import useAuthStore from '../store/useAuthStore';
 import Header from './AdminComponents/Header.jsx';
 import ActiveRequest from './EmployeeComponents/ActiveRequest.jsx';
 import PastRequest from './EmployeeComponents/PastRequest.jsx';
@@ -16,7 +16,8 @@ const formatDate = (dateString) => {
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
-  const { logoutUser, authUser } = useAuthUser();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const [showForm, setShowForm] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState(null);
@@ -120,12 +121,8 @@ const EmployeeDashboard = () => {
   const isRequestPast = (status) => status === 'Completed' || status === 'Rejected';
 
   const handleLogout = async () => {
-    try {
-      await logoutUser();
-      navigate('/login');
-    } catch (error) {
-      navigate('/login');
-    }
+    await logout();
+    navigate('/login');
   };
 
   // Split requests
@@ -134,7 +131,7 @@ const EmployeeDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header authUser={authUser} handleLogout={handleLogout} />
+      <Header user={user} handleLogout={handleLogout} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <div className="flex items-center justify-between mb-6">

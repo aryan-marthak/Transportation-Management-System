@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAuthUser from "../context/AuthUser";
+import useAuthStore from '../store/useAuthStore';
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -9,7 +9,7 @@ const Login = () => {
     const [errors, setErrors] = useState("");
 
     const navigate = useNavigate();
-    const { loginUser } = useAuthUser();
+    const setUser = useAuthStore((state) => state.setUser);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -23,13 +23,24 @@ const Login = () => {
         }
 
         const credentials = { employeeId, email, password };
-        const result = await loginUser(credentials);
-
-        if (result.success) {
-            alert("Login successful!");
-            // Navigation will be handled by App.jsx based on authUser state
-        } else {
-            alert("Login failed: " + result.error);
+        // Replace loginUser with your login API call
+        try {
+            const response = await fetch('http://localhost:5002/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(credentials),
+            });
+            const data = await response.json();
+            if (response.ok) {
+                setUser(data.user); // Store user in Zustand
+                alert('Login successful!');
+                // Navigation will be handled by App.jsx based on Zustand user state
+            } else {
+                alert('Login failed: ' + data.error);
+            }
+        } catch (err) {
+            alert('Login failed: ' + err.message);
         }
     };
 

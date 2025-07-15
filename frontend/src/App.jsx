@@ -4,22 +4,19 @@ import Signup from './Components/Signup'
 import EmployeeDashboard from './Components/EmployeeDashboard'
 import AdminDashboard from './Components/AdminDashboard'
 import { Route, Routes, Navigate } from 'react-router-dom'
-import useAuthUser from './context/AuthUser.jsx'
+import useAuthStore from './store/useAuthStore';
 import { useState, useEffect } from 'react'
 
 function App() {
-  const { authUser } = useAuthUser();
+  const user = useAuthStore((state) => state.user);
+  const fetchCurrentUser = useAuthStore((state) => state.fetchCurrentUser);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Wait for authUser to be loaded from localStorage
-    if (authUser !== undefined) {
-      setLoading(false);
-    }
-  }, [authUser]);
+    fetchCurrentUser().finally(() => setLoading(false));
+  }, []);
 
   if (loading) {
-    // You can render a loading spinner or null while authUser is loading
     return <div>Loading...</div>;
   }
 
@@ -28,8 +25,8 @@ function App() {
       <Route
         path="/login"
         element={
-          authUser ? (
-            authUser.role === 'admin' ? (
+          user ? (
+            user.role === 'admin' ? (
               <Navigate to="/admin-dashboard" />
             ) : (
               <Navigate to="/employee-dashboard" />
@@ -41,12 +38,12 @@ function App() {
       />
       <Route
         path="/signup"
-        element={authUser ? <Navigate to="/" /> : <Signup />}
+        element={user ? <Navigate to="/" /> : <Signup />}
       />
       <Route
         path="/employee-dashboard"
         element={
-          authUser && authUser.role === 'employee' ? (
+          user && user.role === 'employee' ? (
             <EmployeeDashboard />
           ) : (
             <Navigate to="/login" />
@@ -56,7 +53,7 @@ function App() {
       <Route
         path="/admin-dashboard"
         element={
-          authUser && authUser.role === 'admin' ? (
+          user && user.role === 'admin' ? (
             <AdminDashboard />
           ) : (
             <Navigate to="/login" />
@@ -65,7 +62,7 @@ function App() {
       />
       <Route
         path="/"
-        element={<Navigate to={authUser ? (authUser.role === 'admin' ? '/admin-dashboard' : '/employee-dashboard') : '/login'} />}
+        element={<Navigate to={user ? (user.role === 'admin' ? '/admin-dashboard' : '/employee-dashboard') : '/login'} />}
       />
     </Routes>
   )

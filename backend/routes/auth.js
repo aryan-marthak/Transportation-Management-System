@@ -30,7 +30,7 @@ router.post('/signup', async (req, res) => {
         // Create token and save cookie
         createTokenAndSaveCookie(employee._id, res);
         // Only send plain user info
-        res.status(201).json({ message: 'Employee created successfully', employeeId: employee.employeeId, name: employee.name, role: employee.role });
+        res.status(201).json({ user: { employeeId: employee.employeeId, name: employee.name, role: employee.role } });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
@@ -57,7 +57,7 @@ router.post('/login', async (req, res) => {
         createTokenAndSaveCookie(employee._id, res);
 
         // Only send plain user info
-        res.status(200).json({ message: 'Login successful', employeeId: employee.employeeId, name: employee.name, role: employee.role });
+        res.status(200).json({ user: { employeeId: employee.employeeId, name: employee.name, role: employee.role } });
     } catch (err) {
         res.status(500).json({ error: 'Server error.' });
     }
@@ -77,8 +77,9 @@ router.get('/me', secureRoute, (req, res) => {
 router.post('/logout', (req, res) => {
     res.clearCookie('jwt', {
         httpOnly: true,
-        secure: true, // true in production
-        sameSite: 'strict'
+        secure: true,
+        sameSite: 'strict',
+        path: '/',
     }); 
     res.json({ message: 'Logged out' });
 });

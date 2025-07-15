@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import useAuthUser from '../context/AuthUser.jsx';
+import useAuthStore from '../store/useAuthStore';
+import useDriverStore from '../store/useDriverStore';
+import useVehicleStore from '../store/useVehicleStore';
+import useTripRequestStore from '../store/useTripRequestStore';
+import { useNavigate } from 'react-router-dom';
 import Header from './AdminComponents/Header.jsx';
 import Navbar from './AdminComponents/Navbar.jsx';
 import ActiveRequest from './AdminComponents/ActiveRequest.jsx';
@@ -8,13 +12,12 @@ import VehicleManage from './AdminComponents/VehicleManage.jsx';
 import DriverManage from './AdminComponents/DriverManage.jsx';
 
 const AdminDashboard = () => {
-  const { logoutUser, authUser } = useAuthUser();
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
   const [activeTab, setActiveTab] = useState('active-requests');
   const [showAddVehicle, setShowAddVehicle] = useState(false);
   const [showAddDriver, setShowAddDriver] = useState(false);
-  const [requests, setRequests] = useState([]);
-  const [vehicles, setVehicles] = useState([]);
-  const [drivers, setDrivers] = useState([]);
   const [vehicleForm, setVehicleForm] = useState({
     vehicleNo: '',
     vehicleName: '',
@@ -61,51 +64,19 @@ const AdminDashboard = () => {
 
   // Fetching and CRUD logic (same as before)
   const handleLogout = async () => {
-    try {
-      await logoutUser();
-      window.location.href = '/login';
-    } catch (error) {
-      window.location.href = '/login';
-    }
+    await logout();
+    navigate('/login')
   };
 
-  const fetchDrivers = async () => {
-    try {
-      const response = await fetch('http://localhost:5002/api/drivers');
-      if (response.ok) {
-        const driversData = await response.json();
-        setDrivers(driversData);
-      }
-    } catch (error) {}
-  };
-
-  const fetchVehicles = async () => {
-    try {
-      const response = await fetch('http://localhost:5002/api/vehicles');
-      if (response.ok) {
-        const vehiclesData = await response.json();
-        setVehicles(vehiclesData);
-      }
-    } catch (error) {}
-  };
-
-  const fetchRequests = async () => {
-    try {
-      const response = await fetch('http://localhost:5002/api/tripRequest', {
-        credentials: 'include'
-      });
-      if (response.ok) {
-        const requestsData = await response.json();
-        setRequests(requestsData)
-      }
-    } catch (error) {}
-  };
+  const { drivers, fetchDrivers, addDriver, deleteDriver, loading: driversLoading, error: driversError } = useDriverStore();
+  const { vehicles, fetchVehicles, addVehicle, deleteVehicle, loading: vehiclesLoading, error: vehiclesError } = useVehicleStore();
+  const { tripRequests, fetchTripRequests, approveTripRequest, rejectTripRequest, completeTripRequest, loading: tripRequestsLoading, error: tripRequestsError } = useTripRequestStore();
 
   useEffect(() => {
     const interval = setInterval(() => {
       fetchDrivers();
       fetchVehicles();
-      fetchRequests();
+      fetchTripRequests();
     }, 2000);
     return () => clearInterval(interval);
   }, []);
@@ -113,113 +84,58 @@ const AdminDashboard = () => {
   // CRUD handlers for vehicles and drivers
   const handleAddVehicle = async () => {
     if (vehicleForm.vehicleNo && vehicleForm.vehicleName && vehicleForm.capacity && vehicleForm.vehicleClass && vehicleForm.vehicleColor) {
-      try {
-        const response = await fetch('http://localhost:5002/api/vehicles', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            vehicleNo: vehicleForm.vehicleNo,
-            vehicleName: vehicleForm.vehicleName,
-            vehicleClass: vehicleForm.vehicleClass,
-            capacity: parseInt(vehicleForm.capacity),
-            vehicleColor: vehicleForm.vehicleColor
-          }),
-        });
-        if (response.ok) {
-          const newVehicle = await response.json();
-          setVehicles(prev => [...prev, newVehicle]);
-          setVehicleForm({
-            vehicleNo: '',
-            vehicleName: '',
-            vehicleClass: '',
-            capacity: '',
-            vehicleColor: ''
-          });
-          setShowAddVehicle(false);
-        }
-      } catch (error) {}
+      await addVehicle({
+        vehicleNo: vehicleForm.vehicleNo,
+        vehicleName: vehicleForm.vehicleName,
+        vehicleClass: vehicleForm.vehicleClass,
+        capacity: parseInt(vehicleForm.capacity),
+        vehicleColor: vehicleForm.vehicleColor
+      });
+      setVehicleForm({
+        vehicleNo: '',
+        vehicleName: '',
+        vehicleClass: '',
+        capacity: '',
+        vehicleColor: ''
+      });
+      setShowAddVehicle(false);
     }
   };
 
   const handleAddDriver = async () => {
     if (driverForm.driverName && driverForm.age && driverForm.phoneNo && driverForm.licenseNo) {
-      try {
-        const response = await fetch('http://localhost:5002/api/drivers', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            driverName: driverForm.driverName,
-            age: parseInt(driverForm.age),
-            phoneNo: driverForm.phoneNo,
-            licenseNo: driverForm.licenseNo,
-            status: 'available'
-          }),
-        });
-        if (response.ok) {
-          const newDriver = await response.json();
-          setDrivers(prev => [...prev, newDriver]);
-          setDriverForm({
-            driverName: '',
-            age: '',
-            phoneNo: '',
-            licenseNo: ''
-          });
-          setShowAddDriver(false);
-        }
-      } catch (error) {}
+      await addDriver({
+        driverName: driverForm.driverName,
+        age: parseInt(driverForm.age),
+        phoneNo: driverForm.phoneNo,
+        licenseNo: driverForm.licenseNo,
+        status: 'available'
+      });
+      setDriverForm({
+        driverName: '',
+        age: '',
+        phoneNo: '',
+        licenseNo: ''
+      });
+      setShowAddDriver(false);
     }
   };
 
   const handleDeleteDriver = async (driverId) => {
     if (window.confirm('Are you sure you want to delete this driver?')) {
-      try {
-        const response = await fetch(`http://localhost:5002/api/drivers/${driverId}`, {
-          method: 'DELETE',
-        });
-        if (response.ok) {
-          setDrivers(prev => prev.filter(driver => driver._id !== driverId));
-        }
-      } catch (error) {}
+      await deleteDriver(driverId);
     }
   };
 
   const handleDeleteVehicle = async (vehicleId) => {
     if (window.confirm('Are you sure you want to delete this vehicle?')) {
-      try {
-        const response = await fetch(`http://localhost:5002/api/vehicles/${vehicleId}`, {
-          method: 'DELETE',
-        });
-        if (response.ok) {
-          setVehicles(prev => prev.filter(vehicle => vehicle._id !== vehicleId));
-        }
-      } catch (error) {}
+      await deleteVehicle(vehicleId);
     }
   };
 
   // Assignment and rejection logic
   const handleApprove = async (requestId, vehicleId, driverId, remarks) => {
-    try {
-      const response = await fetch(`http://localhost:5002/api/tripRequest/${requestId}/approve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ vehicleId, driverId, remarks })
-      });
-      if (response.ok) {
-        setSelectedRequest(null);
-        setAssignmentData({ vehicleId: '', driverId: '', remarks: '' });
-      } else {
-        alert('Failed to approve and assign. Please try again.')
-      }
-    } catch (error) {
-      alert('Error approving and assigning request.')
-    }
-    await fetchDrivers();
-    await fetchVehicles();
+    await approveTripRequest(requestId, vehicleId, driverId, remarks);
     setSelectedRequest(null);
     setAssignmentData({ vehicleId: '', driverId: '', remarks: '' });
   };
@@ -232,45 +148,14 @@ const AdminDashboard = () => {
 
   const submitReject = async () => {
     if (!rejectingRequestId) return;
-    try {
-      const response = await fetch(`http://localhost:5002/api/tripRequest/${rejectingRequestId}/reject`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ remarks: rejectRemark })
-      });
-      if (response.ok) {
-        setShowRejectModal(false);
-        setRejectRemark('');
-        setRejectingRequestId(null);
-        setRequests(prev => prev.map(req => req._id === rejectingRequestId ? { ...req, status: 'Rejected', remarks: rejectRemark } : req));
-      } else {
-        setShowRejectModal(false);
-        setRejectRemark('');
-        setRejectingRequestId(null);
-      }
-    } catch (error) {
-      setShowRejectModal(false);
-      setRejectRemark('');
-      setRejectingRequestId(null);
-    }
+    await rejectTripRequest(rejectingRequestId, rejectRemark);
+    setShowRejectModal(false);
+    setRejectRemark('');
+    setRejectingRequestId(null);
   };
 
   const handleCompleteTrip = async (requestId) => {
-    try {
-      const response = await fetch(`http://localhost:5002/api/tripRequest/${requestId}/complete`, {
-        method: 'POST',
-        credentials: 'include',
-        header: { "Content-Type": "application/json" }
-      });
-      if (response.ok) {
-        fetchRequests();
-      } else {
-        alert('Failed to complete the trip')
-      }
-    } catch (error) {
-      alert('Error completing the trip')
-    }
+    await completeTripRequest(requestId);
   };
 
   // Helpers for assignment modal
@@ -286,12 +171,12 @@ const AdminDashboard = () => {
   };
 
   // Split requests
-  const activeRequests = requests.filter(req => req.status === 'Pending');
-  const pastRequests = requests.filter(req => req.status !== 'Pending');
+  const activeRequests = tripRequests.filter(req => req.status === 'Pending');
+  const pastRequests = tripRequests.filter(req => req.status !== 'Pending');
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header authUser={authUser} handleLogout={handleLogout} />
+      <Header user={user} handleLogout={handleLogout} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -303,6 +188,8 @@ const AdminDashboard = () => {
               getStatusColor={getStatusColor}
               setSelectedRequest={setSelectedRequest}
               handleReject={handleReject}
+              loading={tripRequestsLoading}
+              error={tripRequestsError}
             />
           )}
           {activeTab === 'past-requests' && (
@@ -311,6 +198,8 @@ const AdminDashboard = () => {
               getStatusColor={getStatusColor}
               formatDateLong={formatDateLong}
               handleCompleteTrip={handleCompleteTrip}
+              loading={tripRequestsLoading}
+              error={tripRequestsError}
             />
           )}
           {activeTab === 'vehicles' && (
@@ -322,6 +211,8 @@ const AdminDashboard = () => {
               vehicleForm={vehicleForm}
               setVehicleForm={setVehicleForm}
               handleAddVehicle={handleAddVehicle}
+              loading={vehiclesLoading}
+              error={vehiclesError}
             />
           )}
           {activeTab === 'drivers' && (
@@ -333,6 +224,8 @@ const AdminDashboard = () => {
               driverForm={driverForm}
               setDriverForm={setDriverForm}
               handleAddDriver={handleAddDriver}
+              loading={driversLoading}
+              error={driversError}
             />
           )}
         </div>

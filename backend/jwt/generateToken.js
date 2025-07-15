@@ -8,6 +8,7 @@ const createTokenAndSaveCookie = (userId, res) => {
         httpOnly: true, // xss
         secure: true,
         sameSite: "strict", // csrf
+        path: '/',
     });
 };
 export default createTokenAndSaveCookie;
