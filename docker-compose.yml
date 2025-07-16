@@ -1,0 +1,39 @@
+version: "3.8"
+services:
+  # Option 2: Uncomment this block to use a local MongoDB container
+  # mongo:
+  #   image: mongo:6
+  #   restart: always
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo_data:/data/db
+
+  backend:
+    build: ./backend
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      # Option 1: Use MongoDB Atlas (recommended for production)
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_TOKEN=${JWT_TOKEN}
+      - GMAIL_PASS=${GMAIL_PASS}
+      - PORT=${PORT}
+    # Option 2: If using local MongoDB container, use this URI instead:
+    #   - MONGODB_URI=mongodb://mongo:27017/yourdbname
+    # depends_on:
+    #   - mongo
+    # Uncomment the next line to mount code for live reload in development
+    # volumes:
+    #   - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+# Option 2: Uncomment this to persist MongoDB data locally
+# volumes:
+#   mongo_data:

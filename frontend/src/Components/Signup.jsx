@@ -14,6 +14,7 @@ const Signup = () => {
     const [errors, setErrors] = useState("");
     const navigate = useNavigate();
     const setUser = useAuthStore((state) => state.setUser);
+    const signup = useAuthStore((state) => state.signup);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -31,23 +32,11 @@ const Signup = () => {
             return;
         }
 
-        try {
-            const response = await fetch("http://localhost:5002/api/signup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ employeeId, name, email, password, department }),
-            });
-            const data = await response.json();
-            if (response.ok) {
-                setUser(data.user); // Store user in Zustand
-                // Redirect based on role (handled by App.jsx)
-                // Optionally, show a message here
-            } else {
-                alert("Signup failed: " + data.error);
-            }
-        } catch (err) {
-            alert("Signup failed: " + err.message);
+        const result = await signup(employeeId, name, email, password, department);
+        if (result.success) {
+            alert("Signup Successful !")
+        } else {
+            alert("Signup failed: " + result.error);
         }
     };
 
