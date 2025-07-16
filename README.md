@@ -27,23 +27,31 @@ A full-stack web application for managing vehicle requests, assignments, and fle
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### Prerequisites
+You can run this project in two ways:
+1. **Local Development (Node.js & npm)**
+2. **Dockerized Setup (Recommended for Easy Start)**
+
+---
+
+### 1. Local Development (Node.js & npm)
+
+#### Prerequisites
 - [Node.js](https://nodejs.org/) (v14 or higher)
 
-### 1. Clone the repository
+#### 1. Clone the repository
 ```bash
 git clone <your-repo-url>
 cd Transportation-Management-System
 ```
 
-### 2. Install all dependencies
+#### 2. Install all dependencies
 ```bash
 npm run install-all
 ```
 
-### 3. Configure environment variables
+#### 3. Configure environment variables
 - Copy the provided `.env.example` file in the `backend` directory to `.env`:
   ```bash
   cd backend
@@ -56,7 +64,7 @@ npm run install-all
   PORT=5002
   ```
 
-#### How to generate a MongoDB Atlas URI:
+##### How to generate a MongoDB Atlas URI:
 1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up or log in.
 2. Create a new project and cluster (free tier is fine).
 3. In your cluster, click "Connect" > "Connect your application".
@@ -64,7 +72,7 @@ npm run install-all
 5. Replace `<username>`, `<password>`, and any placeholder values with your actual credentials and database name.
 6. Paste this string as the value for `MONGODB_URI` in your `.env` file.
 
-#### JWT_SECRET configuration:
+##### JWT_SECRET configuration:
 - `JWT_SECRET` can be **any random string**. It is used to sign and verify authentication tokens.
 - Example values:
   - `JWT_SECRET=supersecret`
@@ -72,16 +80,16 @@ npm run install-all
   - `JWT_SECRET=ThisIsAReallyLongAndRandomSecretKey!@#123`
 - For production, use a long, unpredictable string.
 
-#### PORT configuration:
+##### PORT configuration:
 - The default port is `5002`. You can change it in your `.env` file if needed.
 
-### 4. Start the application
+#### 4. Start the application
 ```bash
 npm run dev
 ```
 - This will start both the backend (http://localhost:5002) and frontend (http://localhost:5173) concurrently.
 
-### 5. Access the app
+#### 5. Access the app
 - Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ---
@@ -135,6 +143,63 @@ Transportation-Management-System/
 - **MongoDB connection failed:** Make sure your MongoDB Atlas URI is correct and your cluster is running.
 - **Port already in use:** Check if ports 5002 (backend) or 5173 (frontend) are available.
 - **Dependencies not found:** Run `npm run install-all` again.
+
+---
+
+### 2. Dockerized Setup (Recommended for Easy Start)
+
+You can also run this project using Docker and Docker Compose for a fully containerized setup.
+
+#### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed
+
+#### 1. Configure Environment Variables
+- Copy `.env.example` to `.env` in the project root and fill in your secrets:
+  ```env
+  MONGODB_URI=your_mongodb_connection_string
+  JWT_TOKEN=your_jwt_secret
+  GMAIL_PASS=your_gmail_app_password
+  PORT=5002
+  ```
+
+#### 2. Set up docker-compose.yml
+
+- For using pre-built Docker images, do the following:
+  - **Remove or comment out** the `build:` lines for both `backend` and `frontend` services in your `docker-compose.yml`.
+  - Your `docker-compose.yml` should look like this:
+    ```yaml
+    services:
+      backend:
+        # build: ./backend
+        image: aryanmarthak/tms-backend:latest
+        ports:
+          - "5002:5002"
+        environment:
+          - MONGODB_URI=${MONGODB_URI}
+          - JWT_TOKEN=${JWT_TOKEN}
+          - GMAIL_PASS=${GMAIL_PASS}
+          - PORT=${PORT}
+      frontend:
+        # build: ./frontend
+        image: aryanmarthak/tms-frontend:latest
+        ports:
+          - "5173:80"
+        depends_on:
+          - backend
+    ```
+- This allows you to pull and run the containers directly from Docker Hub or another registry, without building them locally.
+
+#### 3. Start the Project with Docker Compose
+```sh
+docker compose up
+```
+- The frontend will be available at [http://localhost:5173](http://localhost:5173)
+- The backend API will be available at [http://localhost:5002](http://localhost:5002)
+
+#### 4. Stopping the Project
+```sh
+docker-compose down
+```
 
 ---
 
