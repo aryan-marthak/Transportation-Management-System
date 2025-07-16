@@ -198,7 +198,7 @@ docker compose up
 
 #### 4. Stopping the Project
 ```sh
-docker-compose down
+docker compose down
 ```
 
 ---
