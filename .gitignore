@@ -1,7 +1,11 @@
 .env
 backend/.env
+backend/.dockerignore
+backend/.dockerignore
 
 frontend/node_modules/
 backend/node_modules/
 
 node_modules/
+.dockerignore
+package-lock.json
