@@ -1,39 +1,344 @@
 import React, { useState } from 'react';
 import { History, User, Users, Car, MapPin, Calendar, Search } from 'lucide-react';
+import ExcelJS from 'exceljs';
 
 const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompleteTrip }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportStartDate, setReportStartDate] = useState('');
+  const [reportEndDate, setReportEndDate] = useState('');
+  const [error, setError] = useState('');
 
   const filteredRequests = pastRequests.filter(request => {
     const term = searchTerm.toLowerCase();
-    const name = request.createdBy?.name?.toLowerCase() || '';
-    const employeeId = request.createdBy?.employeeId?.toLowerCase() || '';
-    const vehicleClass = request.vehicleClass?.toLowerCase() || '';
-    const vehicleName = request.vehicleDetails?.vehicleName?.toLowerCase() || '';
-    const driverName = request.vehicleDetails?.driverName?.toLowerCase() || '';
-
-    return (
-      name.includes(term) ||
-      employeeId.includes(term) ||
-      vehicleClass.includes(term) ||
-      vehicleName.includes(term) ||
-      driverName.includes(term)
-    );
+    return ['name', 'employeeId', 'vehicleClass', 'vehicleName', 'driverName']
+      .some(key => (request.createdBy?.[key]?.toLowerCase() || '')
+        .includes(term));
   });
+
+  const handleGenerateReport = async () => {
+    setError('');
+    if (!reportStartDate || !reportEndDate) {
+      setError('Please select both start and end dates.');
+      return;
+    }
+    if (new Date(reportStartDate) > new Date(reportEndDate)) {
+      setError('Start date cannot be after end date.');
+      setReportStartDate('');
+      setReportEndDate('');
+      return;
+    }
+
+    const filteredForReport = pastRequests.filter(req => {
+      const start = new Date(req.startDate);
+      const end = new Date(req.endDate);
+      const filterStart = new Date(reportStartDate);
+      const filterEnd = new Date(reportEndDate);
+      return start <= filterEnd && end >= filterStart;
+    });
+
+    if (filteredForReport.length === 0) {
+      setError('No data found for the selected date range.');
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet1 = workbook.addWorksheet('Past Trips Report');
+    const worksheet2 = workbook.addWorksheet('Drivers Report');
+    const worksheet3 = workbook.addWorksheet('Vehicle Report');
+
+    worksheet1.columns = [
+      { header: 'Trip ID', key: 'tripId', width: 35 },
+      { header: 'Employee Name', key: 'employeeName', width: 25 },
+      { header: 'Employee ID', key: 'employeeId', width: 15 },
+      { header: 'Designation', key: 'designation', width: 20 },
+      { header: 'Pickup Point', key: 'pickupPoint', width: 20 },
+      { header: 'Destination', key: 'destination', width: 20 },
+      { header: 'Start Date', key: 'startDate', width: 15 },
+      { header: 'Start Time', key: 'startTime', width: 15 },
+      { header: 'End Date', key: 'endDate', width: 15 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Vehicle Name', key: 'vehicleName', width: 20 },
+      { header: 'Driver Name', key: 'driverName', width: 20 },
+      { header: 'Number of Passengers', key: 'numberOfPassengers', width: 10 },
+      { header: 'Vehicle Class', key: 'vehicleClass', width: 15 },
+      { header: 'Remarks', key: 'remarks', width: 30 },
+    ];
+
+    worksheet2.columns = [
+      { header: 'Driver Id', key: 'driverId', width: 35 },
+      { header: 'Driver Name', key: 'driverName', width: 25 },
+      { header: 'License No.', key: 'licenseNo', width: 25 },
+      { header: 'Phone No.', key: 'phoneNo', width: 15 },
+      { header: 'Total Trips', key: 'totalTrips', width: 15 },
+    ];
+
+    worksheet3.columns = [
+      { header: 'Vehicle Id', key: 'vehicleId', width: 35 },
+      { header: 'Vehicle No.', key: 'vehicleNo', width: 25 },
+      { header: 'Vehicle Name', key: 'vehicleName', width: 25 },
+      { header: 'Vehicle Class', key: 'vehicleClass', width: 15 },
+      { header: 'Total Trips', key: 'totalTrips', width: 15 },
+    ];
+
+    const headerStyle = {
+      font: { bold: true, color: { argb: 'FFFFFF' }, size: 12 },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '4472C4' } },
+      alignment: { horizontal: 'center', vertical: 'middle' },
+      border: {
+        top: { style: 'thin' },
+        left: { style: 'thin' },
+        bottom: { style: 'thin' },
+        right: { style: 'thin' }
+      }
+    };
+
+    [worksheet1, worksheet2, worksheet3].forEach(ws => {
+      ws.getRow(1).eachCell((cell) => {
+        cell.style = headerStyle;
+      });
+      ws.getRow(1).height = 25;
+    });
+
+    const driverTripCounts = {};
+    const vehicleTripCounts = {};
+
+    filteredForReport.forEach(req => {
+      const dId = req.vehicleDetails?.driverId?.toString() || '';
+      const vId = req.vehicleDetails?.vehicleId?.toString() || '';
+      if (dId) driverTripCounts[dId] = (driverTripCounts[dId] || 0) + 1;
+      if (vId) vehicleTripCounts[vId] = (vehicleTripCounts[vId] || 0) + 1;
+    });
+
+    filteredForReport.forEach((req, i) => {
+      const row = worksheet1.addRow({
+        tripId: req._id,
+        employeeName: req.createdBy?.name || '',
+        employeeId: req.createdBy?.employeeId || '',
+        designation: req.designation || '',
+        vehicleClass: req.vehicleClass || '',
+        vehicleName: req.vehicleDetails?.vehicleName || 'None',
+        driverName: req.vehicleDetails?.driverName || 'None',
+        pickupPoint: req.pickupPoint || '',
+        destination: req.destination || '',
+        startDate: formatDateLong(req.startDate),
+        startTime: req.startTime || '',
+        endDate: formatDateLong(req.endDate),
+        numberOfPassengers: req.numberOfPassengers || '',
+        status: req.status || '',
+        remarks: req.remarks || 'None',
+      });
+
+      const baseStyle = {
+        fill: {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: i % 2 === 0 ? 'F8F9FA' : 'FFFFFF' }
+        },
+        border: {
+          top: { style: 'thin', color: { argb: 'E0E0E0' } },
+          left: { style: 'thin', color: { argb: 'E0E0E0' } },
+          bottom: { style: 'thin', color: { argb: 'E0E0E0' } },
+          right: { style: 'thin', color: { argb: 'E0E0E0' } }
+        },
+        alignment: { vertical: 'middle', wrapText: true }
+      };
+
+      row.eachCell(cell => cell.style = { ...cell.style, ...baseStyle });
+
+      const statusCell = row.getCell(10);
+      const s = req.status?.toLowerCase() || '';
+      const statusStyles = {
+        completed: '28A745',
+        rejected: 'DC3545',
+        pending: 'FFC107',
+        'in progress': '17A2B8',
+        approved: '6C757D'
+      };
+      if (statusStyles[s]) {
+        statusCell.style = {
+          ...statusCell.style,
+          font: { bold: true, color: { argb: 'FFFFFF' } },
+          fill: {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: statusStyles[s] }
+          },
+          alignment: { horizontal: 'center', vertical: 'middle' }
+        };
+      }
+      row.height = 20;
+    });
+
+    Object.entries(driverTripCounts).forEach(([dId, count], i) => {
+      const req = filteredForReport.find(r => r.vehicleDetails?.driverId?.toString() === dId);
+      if (!req) return;
+      const row = worksheet2.addRow({
+        driverId: dId,
+        driverName: req.vehicleDetails.driverName,
+        licenseNo: req.vehicleDetails.licenseNo,
+        phoneNo: req.vehicleDetails.phoneNo,
+        totalTrips: count,
+      });
+      const baseStyle = {
+        fill: {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: i % 2 === 0 ? 'F8F9FA' : 'FFFFFF' }
+        },
+        border: {
+          top: { style: 'thin', color: { argb: 'E0E0E0' } },
+          left: { style: 'thin', color: { argb: 'E0E0E0' } },
+          bottom: { style: 'thin', color: { argb: 'E0E0E0' } },
+          right: { style: 'thin', color: { argb: 'E0E0E0' } }
+        },
+        alignment: { vertical: 'middle' }
+      };
+      row.eachCell(cell => cell.style = { ...cell.style, ...baseStyle });
+      if (count > 5) {
+        const trips = row.getCell(5);
+        trips.style = {
+          ...trips.style,
+          font: { bold: true, color: { argb: 'FFFFFF' } },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '28A745' } },
+          alignment: { horizontal: 'center', vertical: 'middle' }
+        };
+      }
+      row.height = 20;
+    });
+
+    Object.entries(vehicleTripCounts).forEach(([vId, count], i) => {
+      const req = filteredForReport.find(r => r.vehicleDetails?.vehicleId?.toString() === vId);
+      if (!req) return;
+      const row = worksheet3.addRow({
+        vehicleId: vId,
+        vehicleNo: req.vehicleDetails.vehicleNo,
+        vehicleName: req.vehicleDetails.vehicleName,
+        vehicleClass: req.vehicleClass,
+        totalTrips: count,
+      });
+      const baseStyle = {
+        fill: {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: i % 2 === 0 ? 'F8F9FA' : 'FFFFFF' }
+        },
+        border: {
+          top: { style: 'thin', color: { argb: 'E0E0E0' } },
+          left: { style: 'thin', color: { argb: 'E0E0E0' } },
+          bottom: { style: 'thin', color: { argb: 'E0E0E0' } },
+          right: { style: 'thin', color: { argb: 'E0E0E0' } }
+        },
+        alignment: { vertical: 'middle' }
+      };
+      row.eachCell(cell => cell.style = { ...cell.style, ...baseStyle });
+      if (count > 8) {
+        const trips = row.getCell(5);
+        trips.style = {
+          ...trips.style,
+          font: { bold: true, color: { argb: 'FFFFFF' } },
+          fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: '6F42C1' } },
+          alignment: { horizontal: 'center', vertical: 'middle' }
+        };
+      }
+      row.height = 20;
+    });
+
+    worksheet1.autoFilter = { from: 'A1', to: `O${worksheet1.rowCount}` };
+    worksheet2.autoFilter = { from: 'A1', to: `E${worksheet2.rowCount}` };
+    worksheet3.autoFilter = { from: 'A1', to: `E${worksheet3.rowCount}` };
+
+    worksheet1.views = [{ state: 'frozen', ySplit: 1 }];
+    worksheet2.views = [{ state: 'frozen', ySplit: 1 }];
+    worksheet3.views = [{ state: 'frozen', ySplit: 1 }];
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    const safeStart = reportStartDate.replace(/-/g, '');
+    const safeEnd = reportEndDate.replace(/-/g, '');
+    anchor.download = `Trip_Reports_${safeStart}_to_${safeEnd}.xlsx`;
+    anchor.href = url;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+
+    setShowReportModal(false);
+    setReportStartDate('');
+    setReportEndDate('');
+  };
 
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Past Handled Requests</h2>
-      <div className="relative bg-gray-100 rounded-full w-[100%]">
-        <input
-          type="text"
-          placeholder="Search past requests..."
-          className="rounded-full px-4 py-2 border border-gray-300 w-full bg-gray-100 focus:outline-none"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
-        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+      <div className="flex justify-between items-center mb-2">
+        <div className="relative bg-gray-100 rounded-full w-[85%]">
+          <input
+            type="text"
+            placeholder="Search past requests..."
+            className="rounded-full px-4 py-2 border border-gray-300 w-full bg-gray-100 focus:outline-none"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" size={20} />
+        </div>
+        <button
+          onClick={() => setShowReportModal(true)}
+          className="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 transition"
+        >
+          Generate Report
+        </button>
       </div>
+
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Generate Report</h3>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  id="startDate"
+                  value={reportStartDate}
+                  onChange={e => setReportStartDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  id="endDate"
+                  value={reportEndDate}
+                  onChange={e => setReportEndDate(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              {error && <p className="text-red-600 text-sm">{error}</p>}
+              <div className="flex justify-end space-x-3 mt-4">
+                <button
+                  onClick={() => setShowReportModal(false)}
+                  className="bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateReport}
+                  className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition"
+                >
+                  Generate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {filteredRequests.length === 0 ? (
         <div className="text-center py-12">
           <History className="mx-auto h-12 w-12 text-gray-400 mb-4" />
