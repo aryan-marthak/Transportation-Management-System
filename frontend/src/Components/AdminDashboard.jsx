@@ -187,6 +187,7 @@ const AdminDashboard = () => {
               activeRequests={activeRequests}
               getStatusColor={getStatusColor}
               setSelectedRequest={setSelectedRequest}
+              formatDateLong={formatDateLong}
               handleReject={handleReject}
               loading={tripRequestsLoading}
               error={tripRequestsError}

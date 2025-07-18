@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, User, Users, Car, MapPin, Calendar, Check, X } from 'lucide-react';
 
-const ActiveRequest = ({ activeRequests, getStatusColor, setSelectedRequest, handleReject }) => (
+const ActiveRequest = ({ activeRequests, getStatusColor, formatDateLong, setSelectedRequest, handleReject }) => (
   <div className="space-y-4">
     <h2 className="text-2xl font-bold text-gray-800 mb-6">Active Vehicle Requests</h2>
     {activeRequests.length === 0 ? (
@@ -82,7 +82,7 @@ const ActiveRequest = ({ activeRequests, getStatusColor, setSelectedRequest, han
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-gray-500">Pickup Date & Time</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {request.startDate} at {request.startTime}
+                      {formatDateLong(request.startDate)} at {request.startTime}
                     </p>
                   </div>
                 </div>
@@ -93,7 +93,7 @@ const ActiveRequest = ({ activeRequests, getStatusColor, setSelectedRequest, han
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-gray-500">End Date</p>
                     <p className="text-sm font-semibold text-gray-900">
-                      {request.endDate}
+                      {formatDateLong(request.endDate)}
                     </p>
                   </div>
                 </div>

@@ -78,6 +78,7 @@ router.post('/:id/approve', secureRoute, async (req, res) => {
           driverName: driver.driverName,
           vehicleId: vehicle._id,
           driverId: driver._id,
+          licenseNo: driver.licenseNo,
           phoneNo: driver.phoneNo,
           vehicleNo: vehicle.vehicleNo,
           vehicleName: vehicle.vehicleName,
