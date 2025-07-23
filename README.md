@@ -6,17 +6,25 @@ A full-stack web application for managing vehicle requests, assignments, and fle
 
 ## 📋 Features
 - **Employee Dashboard:**
-  - Submit vehicle requests
+  - Submit vehicle/trip requests
   - View request status and history
+  - Receive email notifications for request status (via **nodemailer**)
 - **Admin Dashboard:**
   - Approve/reject trip requests
   - Assign vehicles and drivers
   - Add, remove, and manage vehicles and drivers
   - Mark vehicles as temporarily out of service
+  - Export trip, driver, and vehicle reports to Excel (**exceljs**)
+- **Automated Operations:**
+  - Scheduled completion of trips and automatic resource release (**node-cron**)
 - **Real-time Updates:**
   - Live status updates for requests and assignments
 - **Authentication:**
   - Secure login for employees and admins
+- **State Management:**
+  - Efficient client-side state management using **zustand**
+- **Containerization & Deployment:**
+  - Easy setup and deployment using **Docker** and **docker-compose**
 
 ---
 
