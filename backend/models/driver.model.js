@@ -29,6 +29,10 @@ const driverSchema = new mongoose.Schema({
         required: true,
         enum: ['assigned', 'available'],
         default: 'available'
+    },
+    temporarilyUnavailable: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

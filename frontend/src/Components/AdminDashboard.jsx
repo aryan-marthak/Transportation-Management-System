@@ -21,7 +21,6 @@ const AdminDashboard = () => {
   const [vehicleForm, setVehicleForm] = useState({
     vehicleNo: '',
     vehicleName: '',
-    vehicleClass: '',
     capacity: '',
     vehicleColor: ''
   });
@@ -40,6 +39,13 @@ const AdminDashboard = () => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectRemark, setRejectRemark] = useState('');
   const [rejectingRequestId, setRejectingRequestId] = useState(null);
+  const [assignOutside, setAssignOutside] = useState(false);
+  const [outsideData, setOutsideData] = useState({
+    vehicleNo: '',
+    vehicleName: '',
+    driverName: '',
+    phoneNo: ''
+  });
 
   // Utility for status color
   const getStatusColor = (status) => {
@@ -83,18 +89,16 @@ const AdminDashboard = () => {
 
   // CRUD handlers for vehicles and drivers
   const handleAddVehicle = async () => {
-    if (vehicleForm.vehicleNo && vehicleForm.vehicleName && vehicleForm.capacity && vehicleForm.vehicleClass && vehicleForm.vehicleColor) {
+    if (vehicleForm.vehicleNo && vehicleForm.vehicleName && vehicleForm.capacity && vehicleForm.vehicleColor) {
       await addVehicle({
         vehicleNo: vehicleForm.vehicleNo,
         vehicleName: vehicleForm.vehicleName,
-        vehicleClass: vehicleForm.vehicleClass,
         capacity: parseInt(vehicleForm.capacity),
         vehicleColor: vehicleForm.vehicleColor
       });
       setVehicleForm({
         vehicleNo: '',
         vehicleName: '',
-        vehicleClass: '',
         capacity: '',
         vehicleColor: ''
       });
@@ -135,9 +139,30 @@ const AdminDashboard = () => {
 
   // Assignment and rejection logic
   const handleApprove = async (requestId, vehicleId, driverId, remarks) => {
-    await approveTripRequest(requestId, vehicleId, driverId, remarks);
+    if (assignOutside) {
+      await approveTripRequest(requestId, {
+        isOutside: true,
+        outsideVehicle: {
+          vehicleNo: outsideData.vehicleNo,
+          vehicleName: outsideData.vehicleName
+        },
+        outsideDriver: {
+          driverName: outsideData.driverName,
+          phoneNo: outsideData.phoneNo
+        },
+        remarks
+      });
+    } else {
+      await approveTripRequest(requestId, {
+        vehicleId,
+        driverId,
+        remarks
+      });
+    }
     setSelectedRequest(null);
     setAssignmentData({ vehicleId: '', driverId: '', remarks: '' });
+    setAssignOutside(false);
+    setOutsideData({ vehicleNo: '', vehicleName: '', driverName: '', phoneNo: '' });
   };
 
   const handleReject = async (requestId, reason) => {
@@ -159,15 +184,14 @@ const AdminDashboard = () => {
   };
 
   // Helpers for assignment modal
-  const getAvailableVehicles = (requestedClass) => {
+  const getAvailableVehicles = () => {
     return vehicles.filter(vehicle =>
-      vehicle.vehicleClass === requestedClass &&
       vehicle.status === 'Available' &&
       !vehicle.outOfService
     );
   };
   const getAvailableDrivers = () => {
-    return drivers.filter(driver => driver.status === 'available');
+    return drivers.filter(driver => driver.status === 'available' && !driver.temporarilyUnavailable);
   };
 
   // Split requests
@@ -279,89 +303,176 @@ const AdminDashboard = () => {
                   <span className="text-gray-600">No. of Passengers:</span>
                   <span className="ml-2 font-medium">{selectedRequest.numberOfPassengers}</span>
                 </div>
+              </div>
+            </div>
+            {/* Outside Car Option */}
+            {!assignOutside && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                <p className="text-yellow-800 text-sm mb-2">You can assign an outside car if needed (e.g., if available vehicles do not meet requirements).</p>
+                <button
+                  onClick={() => setAssignOutside(true)}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
+                >
+                  Assign Outside Car
+                </button>
+              </div>
+            )}
+            {/* Assignment Form */}
+            {!assignOutside && (
+              <div className="space-y-4">
+                {/* Vehicle Selection */}
                 <div>
-                  <span className="text-gray-600">Required Vehicle Class:</span>
-                  <span className="ml-2 font-medium">{selectedRequest.vehicleClass}</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Vehicle
+                  </label>
+                  <select
+                    value={assignmentData.vehicleId}
+                    onChange={(e) => setAssignmentData({ ...assignmentData, vehicleId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a vehicle</option>
+                    {getAvailableVehicles().map(vehicle => (
+                      <option key={vehicle._id} value={vehicle._id}>
+                        {vehicle.vehicleNo} - {vehicle.vehicleName} ({vehicle.capacity} seats)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Driver Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Driver
+                  </label>
+                  <select
+                    value={assignmentData.driverId}
+                    onChange={(e) => setAssignmentData({ ...assignmentData, driverId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select a driver</option>
+                    {getAvailableDrivers().map(driver => (
+                      <option key={driver._id} value={driver._id}>
+                        {driver.driverName} - {driver.phoneNo}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Remarks */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Remarks (Optional)
+                  </label>
+                  <textarea
+                    value={assignmentData.remarks}
+                    onChange={(e) => setAssignmentData({ ...assignmentData, remarks: e.target.value })}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Any additional notes or instructions..."
+                  />
                 </div>
               </div>
-            </div>
-            <div className="space-y-4">
-              {/* Vehicle Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Vehicle ({selectedRequest.vehicleClass})
-                </label>
-                <select
-                  value={assignmentData.vehicleId}
-                  onChange={(e) => setAssignmentData({ ...assignmentData, vehicleId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            )}
+            {/* Outside Car Assignment Form */}
+            {assignOutside && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Outside Vehicle Number</label>
+                  <input
+                    type="text"
+                    value={outsideData.vehicleNo}
+                    onChange={e => setOutsideData({ ...outsideData, vehicleNo: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Enter outside vehicle number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Outside Vehicle Name</label>
+                  <input
+                    type="text"
+                    value={outsideData.vehicleName}
+                    onChange={e => setOutsideData({ ...outsideData, vehicleName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Enter outside vehicle name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Outside Driver Name</label>
+                  <input
+                    type="text"
+                    value={outsideData.driverName}
+                    onChange={e => setOutsideData({ ...outsideData, driverName: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Enter outside driver name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Outside Driver Phone</label>
+                  <input
+                    type="text"
+                    value={outsideData.phoneNo}
+                    onChange={e => setOutsideData({ ...outsideData, phoneNo: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Enter outside driver phone"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Remarks (Optional)</label>
+                  <textarea
+                    value={assignmentData.remarks}
+                    onChange={(e) => setAssignmentData({ ...assignmentData, remarks: e.target.value })}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                    placeholder="Any additional notes or instructions..."
+                  />
+                </div>
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    onClick={() => handleApprove(selectedRequest._id)}
+                    disabled={!(outsideData.vehicleNo && outsideData.vehicleName && outsideData.driverName && outsideData.phoneNo)}
+                    className={`flex-1 py-2 rounded-md transition-colors ${!(outsideData.vehicleNo && outsideData.vehicleName && outsideData.driverName && outsideData.phoneNo)
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-yellow-600 text-white hover:bg-yellow-700'
+                      }`}
+                  >
+                    Approve & Assign Outside Car
+                  </button>
+                  <button
+                    onClick={() => { setAssignOutside(false); setOutsideData({ vehicleNo: '', vehicleName: '', driverName: '', phoneNo: '' }); }}
+                    className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+            {/* Default Approve/Assign Buttons */}
+            {!assignOutside && (
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => handleApprove(
+                    selectedRequest._id,
+                    assignmentData.vehicleId,
+                    assignmentData.driverId,
+                    assignmentData.remarks
+                  )}
+                  disabled={!assignmentData.vehicleId || !assignmentData.driverId}
+                  className={`flex-1 py-2 rounded-md transition-colors ${!assignmentData.vehicleId || !assignmentData.driverId
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                    }`}
                 >
-                  <option value="">Select a vehicle</option>
-                  {getAvailableVehicles(selectedRequest.vehicleClass).map(vehicle => (
-                    <option key={vehicle._id} value={vehicle._id}>
-                      {vehicle.vehicleNo} - {vehicle.vehicleName} ({vehicle.capacity} seats)
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {/* Driver Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Driver
-                </label>
-                <select
-                  value={assignmentData.driverId}
-                  onChange={(e) => setAssignmentData({ ...assignmentData, driverId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  Approve & Assign
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedRequest(null);
+                    setAssignmentData({ vehicleId: '', driverId: '', remarks: '' });
+                  }}
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400 transition-colors"
                 >
-                  <option value="">Select a driver</option>
-                  {getAvailableDrivers().map(driver => (
-                    <option key={driver._id} value={driver._id}>
-                      {driver.driverName} - {driver.phoneNo}
-                    </option>
-                  ))}
-                </select>
+                  Cancel
+                </button>
               </div>
-              {/* Remarks */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Remarks (Optional)
-                </label>
-                <textarea
-                  value={assignmentData.remarks}
-                  onChange={(e) => setAssignmentData({ ...assignmentData, remarks: e.target.value })}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Any additional notes or instructions..."
-                />
-              </div>
-            </div>
-            <div className="flex space-x-3 mt-6">
-              <button
-                onClick={() => handleApprove(
-                  selectedRequest._id,
-                  assignmentData.vehicleId,
-                  assignmentData.driverId,
-                  assignmentData.remarks
-                )}
-                disabled={!assignmentData.vehicleId || !assignmentData.driverId}
-                className={`flex-1 py-2 rounded-md transition-colors ${!assignmentData.vehicleId || !assignmentData.driverId
-                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  : 'bg-green-600 text-white hover:bg-green-700'
-                  }`}
-              >
-                Approve & Assign
-              </button>
-              <button
-                onClick={() => {
-                  setSelectedRequest(null);
-                  setAssignmentData({ vehicleId: '', driverId: '', remarks: '' });
-                }}
-                className="flex-1 bg-gray-300 text-gray-700 py-2 rounded-md hover:bg-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}

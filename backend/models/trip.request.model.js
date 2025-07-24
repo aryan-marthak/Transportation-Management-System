@@ -13,12 +13,6 @@ const tripRequestSchema = new mongoose.Schema({
         enum: ['Unit Head', 'Functional Head', 'Department Head', 'Sectional Head', 'Management', 'Staff', 'Worker'],
         trim: true
     },
-    vehicleClass: {
-        type: String,
-        required: true,
-        enum: ['Economy', 'Business', 'Executive', 'Luxury'],
-        trim: true
-    },
     destination: {
         type: String,
         required: true,
@@ -72,7 +66,16 @@ const tripRequestSchema = new mongoose.Schema({
         licenseNo: { type: String },
         vehicleNo: { type: String },
         vehicleName: { type: String },
-        vehicleColor: { type: String }
+        vehicleColor: { type: String },
+        isOutside: { type: Boolean, default: false },
+        outsideVehicle: {
+          vehicleNo: { type: String },
+          vehicleName: { type: String }
+        },
+        outsideDriver: {
+          driverName: { type: String },
+          phoneNo: { type: String }
+        }
     }
 }, {
     timestamps: true

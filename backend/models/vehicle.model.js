@@ -21,12 +21,6 @@ const vehicleSchema = new mongoose.Schema({
         required: true,
         trim: true,
     },
-    vehicleClass: {
-        type: String,
-        required: true,
-        enum: ['Economy', 'Business', 'Executive', 'Luxury'],
-        trim: true
-    },
     status: {
         type: String,
         required: true,

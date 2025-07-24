@@ -55,4 +55,23 @@ const useVehicleStore = create((set) => ({
   // Add updateVehicle, etc. as needed
 }));
 
+useVehicleStore.toggleVehicleOutOfService = async (vehicleId, outOfService) => {
+  useVehicleStore.setState({ loading: true, error: null });
+  try {
+    const res = await fetch(`http://localhost:5002/api/vehicles/${vehicleId}/toggleStatus`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outOfService }),
+    });
+    if (!res.ok) throw new Error('Failed to update vehicle status');
+    const updatedVehicle = await res.json();
+    useVehicleStore.setState((state) => ({
+      vehicles: state.vehicles.map((v) => v._id === vehicleId ? updatedVehicle : v),
+      loading: false,
+    }));
+  } catch (err) {
+    useVehicleStore.setState({ error: err.message, loading: false });
+  }
+};
+
 export default useVehicleStore; 

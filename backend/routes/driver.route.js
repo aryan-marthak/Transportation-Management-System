@@ -49,4 +49,23 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// PATCH toggle temporarilyUnavailable status
+router.patch('/:id/toggleUnavailable', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { temporarilyUnavailable } = req.body;
+    const updatedDriver = await Driver.findByIdAndUpdate(
+      id,
+      { temporarilyUnavailable },
+      { new: true }
+    );
+    if (!updatedDriver) {
+      return res.status(404).json({ message: 'Driver not found' });
+    }
+    res.status(200).json(updatedDriver);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating driver status', error: error.message });
+  }
+});
+
 export default router;

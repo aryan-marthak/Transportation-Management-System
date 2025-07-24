@@ -37,14 +37,14 @@ const useTripRequestStore = create((set) => ({
     }
   },
 
-  approveTripRequest: async (requestId, vehicleId, driverId, remarks) => {
+  approveTripRequest: async (requestId, { vehicleId, driverId, remarks, isOutside, outsideVehicle, outsideDriver }) => {
     set({ loading: true, error: null });
     try {
       const res = await fetch(`http://localhost:5002/api/tripRequest/${requestId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ vehicleId, driverId, remarks }),
+        body: JSON.stringify({ vehicleId, driverId, remarks, isOutside, outsideVehicle, outsideDriver }),
       });
       if (!res.ok) throw new Error('Failed to approve trip request');
       set({ loading: false });

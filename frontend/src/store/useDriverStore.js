@@ -55,4 +55,24 @@ const useDriverStore = create((set) => ({
   // Add updateDriver, etc. as needed
 }));
 
+// Add toggleDriverUnavailable method
+useDriverStore.toggleDriverUnavailable = async (driverId, temporarilyUnavailable) => {
+  useDriverStore.setState({ loading: true, error: null });
+  try {
+    const res = await fetch(`http://localhost:5002/api/drivers/${driverId}/toggleUnavailable`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ temporarilyUnavailable }),
+    });
+    if (!res.ok) throw new Error('Failed to update driver status');
+    const updatedDriver = await res.json();
+    useDriverStore.setState((state) => ({
+      drivers: state.drivers.map((d) => d._id === driverId ? updatedDriver : d),
+      loading: false,
+    }));
+  } catch (err) {
+    useDriverStore.setState({ error: err.message, loading: false });
+  }
+};
+
 export default useDriverStore; 

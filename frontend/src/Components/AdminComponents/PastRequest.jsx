@@ -11,9 +11,32 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
 
   const filteredRequests = pastRequests.filter(request => {
     const term = searchTerm.toLowerCase();
-    return ['name', 'employeeId', 'vehicleClass', 'vehicleName', 'driverName']
-      .some(key => (request.createdBy?.[key]?.toLowerCase() || '')
-        .includes(term));
+    // Gather all searchable fields as strings
+    const fields = [
+      request.createdBy?.name,
+      request.createdBy?.employeeId,
+      request.designation,
+      request.purpose,
+      request.destination,
+      request.pickupPoint,
+      request.startDate,
+      request.startTime,
+      request.endDate,
+      request.numberOfPassengers,
+      request.remarks,
+      request.status,
+      request.vehicleDetails?.vehicleNo,
+      request.vehicleDetails?.vehicleName,
+      request.vehicleDetails?.vehicleColor,
+      request.vehicleDetails?.driverName,
+      request.vehicleDetails?.phoneNo,
+      request.vehicleDetails?.licenseNo,
+      request.vehicleDetails?.outsideVehicle?.vehicleNo,
+      request.vehicleDetails?.outsideVehicle?.vehicleName,
+      request.vehicleDetails?.outsideDriver?.driverName,
+      request.vehicleDetails?.outsideDriver?.phoneNo
+    ];
+    return fields.some(f => (f ? String(f).toLowerCase().includes(term) : false));
   });
 
   const handleGenerateReport = async () => {
@@ -46,11 +69,12 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
     const worksheet1 = workbook.addWorksheet('Past Trips Report');
     const worksheet2 = workbook.addWorksheet('Drivers Report');
     const worksheet3 = workbook.addWorksheet('Vehicle Report');
+    const worksheet4 = workbook.addWorksheet('Outside Cars');
 
     worksheet1.columns = [
       { header: 'Trip ID', key: 'tripId', width: 35 },
-      { header: 'Employee Name', key: 'employeeName', width: 25 },
       { header: 'Employee ID', key: 'employeeId', width: 15 },
+      { header: 'Employee Name', key: 'employeeName', width: 25 },
       { header: 'Designation', key: 'designation', width: 20 },
       { header: 'Pickup Point', key: 'pickupPoint', width: 20 },
       { header: 'Destination', key: 'destination', width: 20 },
@@ -61,7 +85,6 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
       { header: 'Vehicle Name', key: 'vehicleName', width: 20 },
       { header: 'Driver Name', key: 'driverName', width: 20 },
       { header: 'Number of Passengers', key: 'numberOfPassengers', width: 10 },
-      { header: 'Vehicle Class', key: 'vehicleClass', width: 15 },
       { header: 'Remarks', key: 'remarks', width: 30 },
     ];
 
@@ -77,8 +100,24 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
       { header: 'Vehicle Id', key: 'vehicleId', width: 35 },
       { header: 'Vehicle No.', key: 'vehicleNo', width: 25 },
       { header: 'Vehicle Name', key: 'vehicleName', width: 25 },
-      { header: 'Vehicle Class', key: 'vehicleClass', width: 15 },
       { header: 'Total Trips', key: 'totalTrips', width: 15 },
+    ];
+
+    worksheet4.columns = [
+      { header: 'Trip ID', key: 'tripId', width: 35 },
+      { header: 'Employee ID', key: 'employeeId', width: 15 },
+      { header: 'Employee Name', key: 'employeeName', width: 25 },
+      { header: 'Pickup Point', key: 'pickupPoint', width: 20 },
+      { header: 'Designation', key: 'designation', width: 20 },
+      { header: 'Destination', key: 'destination', width: 20 },
+      { header: 'Start Date', key: 'startDate', width: 15 },
+      { header: 'Start Time', key: 'startTime', width: 15 },
+      { header: 'End Date', key: 'endDate', width: 15 },
+      { header: 'Outside Vehicle No.', key: 'vehicleNo', width: 20 },
+      { header: 'Outside Vehicle Name', key: 'vehicleName', width: 20 },
+      { header: 'Outside Driver Name', key: 'driverName', width: 20 },
+      { header: 'Outside Driver Phone', key: 'phoneNo', width: 20 },
+      { header: 'Remarks', key: 'remarks', width: 30 },
     ];
 
     const headerStyle = {
@@ -93,7 +132,7 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
       }
     };
 
-    [worksheet1, worksheet2, worksheet3].forEach(ws => {
+    [worksheet1, worksheet2, worksheet3, worksheet4].forEach(ws => {
       ws.getRow(1).eachCell((cell) => {
         cell.style = headerStyle;
       });
@@ -116,7 +155,6 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
         employeeName: req.createdBy?.name || '',
         employeeId: req.createdBy?.employeeId || '',
         designation: req.designation || '',
-        vehicleClass: req.vehicleClass || '',
         vehicleName: req.vehicleDetails?.vehicleName || 'None',
         driverName: req.vehicleDetails?.driverName || 'None',
         pickupPoint: req.pickupPoint || '',
@@ -214,7 +252,6 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
         vehicleId: vId,
         vehicleNo: req.vehicleDetails.vehicleNo,
         vehicleName: req.vehicleDetails.vehicleName,
-        vehicleClass: req.vehicleClass,
         totalTrips: count,
       });
       const baseStyle = {
@@ -244,13 +281,54 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
       row.height = 20;
     });
 
+    // Add rows for outside cars
+    const outsideTrips = filteredForReport.filter(req => req.vehicleDetails && req.vehicleDetails.isOutside);
+    // DEBUG: Uncomment to check what is being picked up
+    // console.log('Outside trips for Excel:', outsideTrips);
+    outsideTrips.forEach((req, i) => {
+      const row = worksheet4.addRow({
+        tripId: req._id,
+        employeeId: req.createdBy?.employeeId || '',
+        employeeName: req.createdBy?.name || '',
+        designation: req.designation || '',
+        pickupPoint: req.pickupPoint || '',
+        destination: req.destination || '',
+        startDate: formatDateLong(req.startDate),
+        startTime: req.startTime || '',
+        endDate: formatDateLong(req.endDate),
+        vehicleNo: req.vehicleDetails?.outsideVehicle?.vehicleNo || '',
+        vehicleName: req.vehicleDetails?.outsideVehicle?.vehicleName || '',
+        driverName: req.vehicleDetails?.outsideDriver?.driverName || '',
+        phoneNo: req.vehicleDetails?.outsideDriver?.phoneNo || '',
+        remarks: req.remarks || 'None',
+      });
+      const baseStyle = {
+        fill: {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: i % 2 === 0 ? 'F8F9FA' : 'FFFFFF' }
+        },
+        border: {
+          top: { style: 'thin', color: { argb: 'E0E0E0' } },
+          left: { style: 'thin', color: { argb: 'E0E0E0' } },
+          bottom: { style: 'thin', color: { argb: 'E0E0E0' } },
+          right: { style: 'thin', color: { argb: 'E0E0E0' } }
+        },
+        alignment: { vertical: 'middle', wrapText: true }
+      };
+      row.eachCell(cell => cell.style = { ...cell.style, ...baseStyle });
+      row.height = 20;
+    });
+
     worksheet1.autoFilter = { from: 'A1', to: `O${worksheet1.rowCount}` };
     worksheet2.autoFilter = { from: 'A1', to: `E${worksheet2.rowCount}` };
     worksheet3.autoFilter = { from: 'A1', to: `E${worksheet3.rowCount}` };
+    worksheet4.autoFilter = { from: 'A1', to: `K${worksheet4.rowCount}` };
 
     worksheet1.views = [{ state: 'frozen', ySplit: 1 }];
     worksheet2.views = [{ state: 'frozen', ySplit: 1 }];
     worksheet3.views = [{ state: 'frozen', ySplit: 1 }];
+    worksheet4.views = [{ state: 'frozen', ySplit: 1 }];
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -350,14 +428,14 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
           .map(request => (
             <div key={request._id} className="bg-white rounded-xl shadow-sm border border-gray-300 overflow-hidden hover:shadow-md transition-shadow h-fit">
               {/* Card Header */}
-              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-start space-x-4">
-                    <div className="bg-white p-3 rounded-full shadow-sm">
-                      <User className="h-6 w-6 text-gray-600" />
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+                  <div className="flex items-start space-x-2 sm:space-x-4">
+                    <div className="bg-white p-2 sm:p-3 rounded-full shadow-sm">
+                      <User className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base font-semibold text-gray-900 truncate">
+                      <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
                         {request.createdBy?.name || 'Employee'} <span className="text-gray-600 font-normal">({request.designation})</span>
                       </h3>
                       <div className="flex items-center space-x-2 mt-1">
@@ -367,14 +445,14 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
                       </div>
                     </div>
                   </div>
-                  <div className='flex gap-4'>
+                  <div className='flex flex-col sm:flex-row gap-2 sm:gap-4'>
                     {request.status === "Approved" && (
                       <button onClick={() => handleCompleteTrip(request._id)}
-                        className='bg-green-600 text-white px-5 py-1 rounded-full hover:bg-green-700 transition'>
+                        className='w-full sm:w-auto bg-green-600 text-white px-4 sm:px-5 py-1 rounded-full hover:bg-green-700 transition'>
                         Complete this Trip
                       </button>
                     )}
-                    <span className={`inline-flex items-center px-5 py-3 rounded-full text-md font-semibold border border-gray-400 ${getStatusColor(request.status)}`}>
+                    <span className={`inline-flex items-center px-3 sm:px-5 py-2 sm:py-3 rounded-full text-xs sm:text-md font-semibold border border-gray-400 ${getStatusColor(request.status)}`}>
                       {request.status}
                     </span>
                   </div>
@@ -382,13 +460,13 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
               </div>
 
               {/* Card Content */}
-              <div className="p-6">
+              <div className="p-3 sm:p-6">
                 {/* Trip Details */}
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {/* Purpose */}
-                  <div className="flex items-start space-x-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <MapPin className="h-5 w-5 text-blue-600" />
+                  <div className="flex items-start space-x-2 sm:space-x-3">
+                    <div className="bg-blue-100 p-1.5 sm:p-2 rounded-lg">
+                      <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium text-gray-500">Purpose</p>
@@ -397,19 +475,19 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
                   </div>
 
                   {/* Pickup and Destination */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-green-100 p-2 rounded-lg">
-                        <MapPin className="h-5 w-5 text-green-600" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="bg-green-100 p-1.5 sm:p-2 rounded-lg">
+                        <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-gray-500">Pickup Point</p>
                         <p className="text-sm font-semibold text-gray-900 truncate">{request.pickupPoint}</p>
                       </div>
                     </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-red-100 p-2 rounded-lg">
-                        <MapPin className="h-5 w-5 text-red-600" />
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="bg-red-100 p-1.5 sm:p-2 rounded-lg">
+                        <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-gray-500">Destination</p>
@@ -419,10 +497,10 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
                   </div>
 
                   {/* Pickup Date & Time and End Date */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-purple-100 p-2 rounded-lg">
-                        <Calendar className="h-5 w-5 text-purple-600" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="bg-purple-100 p-1.5 sm:p-2 rounded-lg">
+                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-gray-500">Pickup Date & Time</p>
@@ -431,9 +509,9 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-orange-100 p-2 rounded-lg">
-                        <Calendar className="h-5 w-5 text-orange-600" />
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="bg-orange-100 p-1.5 sm:p-2 rounded-lg">
+                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-gray-500">End Date</p>
@@ -445,47 +523,82 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
                   </div>
 
                   {/* Passengers and Vehicle */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-cyan-100 p-2 rounded-lg">
-                        <Users className="h-5 w-5 text-cyan-600" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4">
+                    <div className="flex items-start space-x-2 sm:space-x-3">
+                      <div className="bg-cyan-100 p-1.5 sm:p-2 rounded-lg">
+                        <Users className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-600" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-gray-500">No. of Passengers</p>
                         <p className="text-sm font-semibold text-gray-900">{request.numberOfPassengers}</p>
                       </div>
                     </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="bg-teal-100 p-2 rounded-lg">
-                        <Car className="h-5 w-5 text-teal-600" />
+                    {request.vehicleDetails?.isOutside ? (
+                      <div className="flex items-start space-x-2 sm:space-x-3">
+                        <div className="bg-yellow-100 p-1.5 sm:p-2 rounded-lg">
+                          <Car className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-gray-500">Assigned Outside Vehicle</p>
+                          <p className="text-sm font-semibold text-yellow-900">
+                            {request.vehicleDetails?.outsideVehicle?.vehicleNo || ''} - {request.vehicleDetails?.outsideVehicle?.vehicleName || ''}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-gray-500">Requested Vehicle</p>
-                        <p className="text-sm font-semibold text-gray-900">{request.vehicleClass}</p>
+                    ) : (
+                      <div className="flex items-start space-x-2 sm:space-x-3">
+                        <div className="bg-teal-100 p-1.5 sm:p-2 rounded-lg">
+                          <Car className="h-4 w-4 sm:h-5 sm:w-5 text-teal-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-gray-500">Assigned Vehicle</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {request.vehicleDetails ? `${request.vehicleDetails.vehicleNo} - ${request.vehicleDetails.vehicleName}` : 'Not assigned'}
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Assigned Vehicle/Driver */}
                   {request.vehicleDetails && (
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                      <div>
-                        <p className="text-xs font-medium text-gray-500">Assigned Vehicle</p>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {request.vehicleDetails.vehicleNo} - {request.vehicleDetails.vehicleName}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-gray-500">Assigned Driver</p>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {request.vehicleDetails.driverName} ({request.vehicleDetails.phoneNo})
-                        </p>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-4 mt-2 sm:mt-4">
+                      {request.vehicleDetails.isOutside ? (
+                        <>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">Assigned Outside Vehicle</p>
+                            <p className="text-sm font-semibold text-yellow-900">
+                              {request.vehicleDetails?.outsideVehicle?.vehicleNo || ''} - {request.vehicleDetails?.outsideVehicle?.vehicleName || ''}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">Assigned Outside Driver</p>
+                            <p className="text-sm font-semibold text-yellow-900">
+                              {request.vehicleDetails?.outsideDriver?.driverName || ''} ({request.vehicleDetails?.outsideDriver?.phoneNo || ''})
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">Assigned Vehicle</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {request.vehicleDetails ? `${request.vehicleDetails.vehicleNo} - ${request.vehicleDetails.vehicleName}` : 'Not assigned'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-gray-500">Assigned Driver</p>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {request.vehicleDetails ? `${request.vehicleDetails.driverName} (${request.vehicleDetails.phoneNo})` : 'Not assigned'}
+                            </p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
                   {/* Remarks */}
-                  <div className="mt-4">
+                  <div className="mt-2 sm:mt-4">
                     <label className="block text-xs font-medium text-gray-500 mb-1">Remarks</label>
                     <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{request.remarks || 'No remarks provided'}</p>
                   </div>

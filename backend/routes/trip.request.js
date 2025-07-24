@@ -11,12 +11,11 @@ const router = express.Router();
 
 router.post('/', secureRoute, async (req, res) => {
     try {
-        const { purpose, designation, vehicleClass, destination, pickupPoint, startDate, startTime, endDate, numberOfPassengers, remarks } = req.body;
+        const { purpose, designation, destination, pickupPoint, startDate, startTime, endDate, numberOfPassengers, remarks } = req.body;
 
         const newTripRequest = new tripRequest({
             purpose,
             designation,
-            vehicleClass,
             destination,
             pickupPoint,
             startDate: new Date(startDate),
@@ -29,6 +28,14 @@ router.post('/', secureRoute, async (req, res) => {
 
         const savedTripRequest = await newTripRequest.save();
         res.status(201).json(savedTripRequest);
+        // Send email to transport head in the background
+        sendMail(
+            'transport.head@adityabirla.com',
+            'New Trip Request Created',
+            `A new trip request has been created by ${req.user.name} (${req.user.email}).\n\nDestination: ${destination}\nPurpose: ${purpose}\nDepartment: ${req.user.department}\nPickup Point: ${pickupPoint}\nStart: ${startDate} ${startTime}\nEnd: ${endDate}\nNumber of Passengers: ${numberOfPassengers}\nRemarks: ${remarks || 'None'}\n\nPlease review the request in the system.`
+        ).catch(mailError => {
+            console.error('Failed to send trip request notification to transport head:', mailError);
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error creating trip request', error: error.message });
     }
@@ -53,55 +60,69 @@ router.get('/', secureRoute, async (req, res) => {
 // APPROVE AND ASSIGN VEHICLE/DRIVER TO TRIP REQUEST
 router.post('/:id/approve', secureRoute, async (req, res) => {
   try {
-    const { vehicleId, driverId, remarks } = req.body;
+    const { vehicleId, driverId, remarks, isOutside, outsideVehicle, outsideDriver } = req.body;
     const tripRequestId = req.params.id;
 
-    // Find driver and vehicle
-    const driver = await driverModel.findById(driverId);
-    const vehicle = await vehicleModel.findById(vehicleId);
-
-    if (!driver || !vehicle) {
-      return res.status(404).json({ message: 'Driver or Vehicle not found' });
+    let vehicleDetails = {};
+    if (isOutside) {
+      vehicleDetails = {
+        isOutside: true,
+        outsideVehicle: outsideVehicle || {},
+        outsideDriver: outsideDriver || {},
+      };
+    } else {
+      // Find driver and vehicle
+      const driver = await driverModel.findById(driverId);
+      const vehicle = await vehicleModel.findById(vehicleId);
+      if (!driver || !vehicle) {
+        return res.status(404).json({ message: 'Driver or Vehicle not found' });
+      }
+      // Correctly update vehicle and driver status
+      await vehicleModel.findByIdAndUpdate(vehicleId, { status: 'Assigned' });
+      await driverModel.findByIdAndUpdate(driverId, { status: 'assigned' });
+      vehicleDetails = {
+        driverName: driver.driverName,
+        vehicleId: vehicle._id,
+        driverId: driver._id,
+        licenseNo: driver.licenseNo,
+        phoneNo: driver.phoneNo,
+        vehicleNo: vehicle.vehicleNo,
+        vehicleName: vehicle.vehicleName,
+        vehicleColor: vehicle.vehicleColor
+      };
     }
-
-    // Correctly update vehicle and driver status
-    await vehicleModel.findByIdAndUpdate(vehicleId, { status: 'Assigned' });
-    await driverModel.findByIdAndUpdate(driverId, { status: 'assigned' });
-
     // Update trip request
     const updatedTrip = await tripRequest.findByIdAndUpdate(
       tripRequestId,
       {
         status: 'Approved',
         remarks: remarks || '',
-        vehicleDetails: {
-          driverName: driver.driverName,
-          vehicleId: vehicle._id,
-          driverId: driver._id,
-          licenseNo: driver.licenseNo,
-          phoneNo: driver.phoneNo,
-          vehicleNo: vehicle.vehicleNo,
-          vehicleName: vehicle.vehicleName,
-          vehicleColor: vehicle.vehicleColor
-        }
+        vehicleDetails
       },
       { new: true }
     ).populate('createdBy');
 
-    // Send email to the user who created the trip request
-    if (updatedTrip && updatedTrip.createdBy && updatedTrip.createdBy.email) {
-      try {
-        await sendMail(
-          updatedTrip.createdBy.email,
-          'Your trip request has been approved!',
-          `Hello ${updatedTrip.createdBy.name},\n\nYour trip request to ${updatedTrip.destination} has been approved.\n\nVehicle: ${vehicle.vehicleName} (${vehicle.vehicleNo})\nDriver: ${driver.driverName} (${driver.phoneNo})\n\nRemarks: ${remarks || 'None'}\n\nThank you.`
-        );
-      } catch (mailError) {
-        console.error('Failed to send approval email:', mailError);
-      }
-    }
-
     res.status(200).json(updatedTrip);
+
+    // Send email to the user who created the trip request in the background
+    if (updatedTrip && updatedTrip.createdBy && updatedTrip.createdBy.email) {
+      let vehicleInfo = '';
+      let driverInfo = '';
+      if (isOutside) {
+        vehicleInfo = outsideVehicle ? `${outsideVehicle.vehicleName || ''} (${outsideVehicle.vehicleNo || ''})` : 'Outside Vehicle';
+        driverInfo = outsideDriver ? `${outsideDriver.driverName || ''} (${outsideDriver.phoneNo || ''})` : 'Outside Driver';
+      } else {
+        vehicleInfo = vehicleDetails.vehicleName + ' (' + vehicleDetails.vehicleNo + ')';
+        driverInfo = vehicleDetails.driverName + ' (' + vehicleDetails.phoneNo + ')';
+      }
+      sendMail(
+        updatedTrip.createdBy.email,
+        'Your trip request has been approved!',
+        `Hello ${updatedTrip.createdBy.name},\n\nYour trip request to ${updatedTrip.destination} has been approved.\n\nVehicle: ${vehicleInfo}\nDriver: ${driverInfo}\n\nRemarks: ${remarks || 'None'}\n\nThank you.`
+      ).catch(mailError => {
+        console.error('Failed to send approval email:', mailError);
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error approving trip request', error: error.message });
   }
@@ -123,20 +144,18 @@ router.post('/:id/reject', secureRoute, async (req, res) => {
       { new: true }
     ).populate('createdBy');
 
-    // Send email to the user who created the trip request
-    if (updatedTrip && updatedTrip.createdBy && updatedTrip.createdBy.email) {
-      try {
-        await sendMail(
-          updatedTrip.createdBy.email,
-          'Your trip request has been rejected',
-          `Hello ${updatedTrip.createdBy.name},\n\nWe regret to inform you that your trip request to ${updatedTrip.destination} has been rejected.\n\nRemarks: ${remarks || 'None'}\n\nIf you have any questions, please contact the admin.`
-        );
-      } catch (mailError) {
-        console.error('Failed to send rejection email:', mailError);
-      }
-    }
-
     res.status(200).json(updatedTrip);
+
+    // Send email to the user who created the trip request in the background
+    if (updatedTrip && updatedTrip.createdBy && updatedTrip.createdBy.email) {
+      sendMail(
+        updatedTrip.createdBy.email,
+        'Your trip request has been rejected',
+        `Hello ${updatedTrip.createdBy.name},\n\nWe regret to inform you that your trip request to ${updatedTrip.destination} has been rejected.\n\nRemarks: ${remarks || 'None'}\n\nIf you have any questions, please contact the admin.`
+      ).catch(mailError => {
+        console.error('Failed to send rejection email:', mailError);
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Error rejecting trip request', error: error.message });
   }
