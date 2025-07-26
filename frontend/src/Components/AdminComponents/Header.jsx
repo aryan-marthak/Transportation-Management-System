@@ -34,9 +34,9 @@ const Header = ({ user, handleLogout }) => (
             className="absolute left-0 top-1/2 pt-2  -translate-y-1/2 md:relative md:left-auto md:top-auto md:transform-none h-28 md:h-48 object-contain drop-shadow-md"
           />
           {/* Title needs margin to avoid the logo */}
-          <div className="w-full md:w-auto text-center md:text-left pl-24 md:ml-0">
+          <div className="w-full md:w-auto text-center md:text-left pl-24 md:pl-0 md:ml-0">
             <span
-              style={{ WebkitTextStroke: '0.2px black', textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}
+              style={{ textShadow: '4px 4px 4px rgba(0.5,0.5,0.5,0.5)' }}
               className="text-lg sm:text-xl font-bold text-white tracking-wide"
             >
               TRANSPORT MANAGEMENT
