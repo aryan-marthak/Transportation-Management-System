@@ -1,25 +1,27 @@
-import twilio from 'twilio';
-import dotenv from 'dotenv';
+// This code is part of a transportation management system backend that handles trip requests and notifications.
 
-dotenv.config()
+// import twilio from 'twilio';
+// import dotenv from 'dotenv';
 
-const accountSid = process.env.TWILIO_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+// dotenv.config()
 
-export const sendSMS = async (to, message) => {
-  if (!accountSid || !authToken || !twilioPhone) {
-    console.error('Twilio credentials not set');
-    return;
-  }
-  const client = twilio(accountSid, authToken);
-  try {
-    await client.messages.create({
-      body: message,
-      from: twilioPhone,
-      to
-    });
-  } catch (err) {
-    console.error('Failed to send SMS:', err.message);
-  }
-}; 
+// const accountSid = process.env.TWILIO_SID;
+// const authToken = process.env.TWILIO_AUTH_TOKEN;
+// const twilioPhone = process.env.TWILIO_PHONE_NUMBER;
+
+// export const sendSMS = async (to, message) => {
+//   if (!accountSid || !authToken || !twilioPhone) {
+//     console.error('Twilio credentials not set');
+//     return;
+//   }
+//   const client = twilio(accountSid, authToken);
+//   try {
+//     await client.messages.create({
+//       body: message,
+//       from: twilioPhone,
+//       to
+//     });
+//   } catch (err) {
+//     console.error('Failed to send SMS:', err.message);
+//   }
+// }; 

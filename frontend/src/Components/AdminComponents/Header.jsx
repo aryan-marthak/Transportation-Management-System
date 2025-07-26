@@ -1,5 +1,5 @@
 import React from 'react';
-import abg_logo from '../../assets/final.png';
+import abg_logo from '../../../public/final.png';
 import { CarFront, LogOut } from 'lucide-react';
 
 const Header = ({ user, handleLogout }) => (
