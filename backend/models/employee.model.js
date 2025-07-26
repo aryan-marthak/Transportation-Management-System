@@ -30,6 +30,11 @@ const employeeSchema = new mongoose.Schema({
         required: true,
         minlength: 6
     },
+    phoneNo: {
+        type: String,
+        required: false,
+        trim: true
+    },
     role: {
         type: String,
         default: 'employee'

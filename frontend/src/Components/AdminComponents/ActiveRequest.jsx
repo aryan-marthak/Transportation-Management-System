@@ -21,11 +21,11 @@ const ActiveRequest = ({ activeRequests, getStatusColor, formatDateLong, setSele
                 </div>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
-                    {request.createdBy?.name || 'Employee'} <span className="text-gray-600 font-normal">({request.designation})</span>
+                    {(request.createdBy && request.createdBy.name) ? request.createdBy.name : 'Unknown'} <span className="text-gray-600 font-normal">({request.designation})</span>
                   </h3>
                   <div className="flex items-center space-x-2 mt-1">
                     <span className="text-xs font-bold text-gray-700">
-                      {request.createdBy.employeeId}
+                      {(request.createdBy && request.createdBy.employeeId) ? request.createdBy.employeeId : 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -117,7 +117,7 @@ const ActiveRequest = ({ activeRequests, getStatusColor, formatDateLong, setSele
             {request.status === 'Pending' && (
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mt-4 sm:mt-6">
                 <button
-                  onClick={() => setSelectedRequest(request)}
+                  onClick={() => setSelectedRequest({ ...request, createdBy: request.createdBy || {} })}
                   className="w-full sm:flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm text-sm"
                 >
                   <Check className="h-4 w-4" />

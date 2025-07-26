@@ -4,6 +4,7 @@ import secureRoute from "../middleware/secureRoute.js";
 import driverModel from "../models/driver.model.js";
 import vehicleModel from "../models/vehicle.model.js";
 import { sendMail } from '../utils/mailer.js';
+import { sendSMS } from '../utils/twiliosms.js';
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.post('/', secureRoute, async (req, res) => {
         res.status(201).json(savedTripRequest);
         // Send email to transport head in the background
         sendMail(
-            'transport.head@adityabirla.com',
+            'nilesh.marthak@adityabirla.com',
             'New Trip Request Created',
             `A new trip request has been created by ${req.user.name} (${req.user.email}).\n\nDestination: ${destination}\nPurpose: ${purpose}\nDepartment: ${req.user.department}\nPickup Point: ${pickupPoint}\nStart: ${startDate} ${startTime}\nEnd: ${endDate}\nNumber of Passengers: ${numberOfPassengers}\nRemarks: ${remarks || 'None'}\n\nPlease review the request in the system.`
         ).catch(mailError => {
@@ -122,6 +123,12 @@ router.post('/:id/approve', secureRoute, async (req, res) => {
       ).catch(mailError => {
         console.error('Failed to send approval email:', mailError);
       });
+      // Send SMS if phone number is available
+      if (updatedTrip.createdBy.phoneNo) {
+        const smsMsg = `Your trip request to ${updatedTrip.destination} has been APPROVED.\nVehicle: ${vehicleInfo}\nDriver: ${driverInfo}\nRemarks: ${remarks || 'None'}`;
+        sendSMS(`+91 ${updatedTrip.createdBy.phoneNo}`, smsMsg);
+        console.log("sms sent")
+      }
     }
   } catch (error) {
     res.status(500).json({ message: 'Error approving trip request', error: error.message });
@@ -155,6 +162,11 @@ router.post('/:id/reject', secureRoute, async (req, res) => {
       ).catch(mailError => {
         console.error('Failed to send rejection email:', mailError);
       });
+      // Send SMS if phone number is available
+      if (updatedTrip.createdBy.phoneNo) {
+        const smsMsg = `Your trip request to ${updatedTrip.destination} has been REJECTED.\nRemarks: ${remarks || 'None'}`;
+        sendSMS(`+91 ${updatedTrip.createdBy.phoneNo}`, smsMsg);
+      }
     }
   } catch (error) {
     res.status(500).json({ message: 'Error rejecting trip request', error: error.message });

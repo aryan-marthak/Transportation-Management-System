@@ -566,26 +566,21 @@ const PastRequest = ({ pastRequests, getStatusColor, formatDateLong, handleCompl
                       {request.vehicleDetails.isOutside ? (
                         <>
                           <div>
-                            <p className="text-xs font-medium text-gray-500">Assigned Outside Vehicle</p>
-                            <p className="text-sm font-semibold text-yellow-900">
-                              {request.vehicleDetails?.outsideVehicle?.vehicleNo || ''} - {request.vehicleDetails?.outsideVehicle?.vehicleName || ''}
-                            </p>
-                          </div>
-                          <div>
                             <p className="text-xs font-medium text-gray-500">Assigned Outside Driver</p>
                             <p className="text-sm font-semibold text-yellow-900">
-                              {request.vehicleDetails?.outsideDriver?.driverName || ''} ({request.vehicleDetails?.outsideDriver?.phoneNo || ''})
+                              {request.vehicleDetails?.outsideDriver?.driverName || 'Not Assigned'} ({request.vehicleDetails?.outsideDriver?.phoneNo || 'Not Assigned'})
                             </p>
                           </div>
+                          
                         </>
                       ) : (
                         <>
-                          <div>
+                          {/* <div>
                             <p className="text-xs font-medium text-gray-500">Assigned Vehicle</p>
                             <p className="text-sm font-semibold text-gray-900">
                               {request.vehicleDetails ? `${request.vehicleDetails.vehicleNo} - ${request.vehicleDetails.vehicleName}` : 'Not assigned'}
                             </p>
-                          </div>
+                          </div> */}
                           <div>
                             <p className="text-xs font-medium text-gray-500">Assigned Driver</p>
                             <p className="text-sm font-semibold text-gray-900">
