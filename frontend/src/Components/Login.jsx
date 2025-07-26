@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from '../store/useAuthStore';
+import { API_ENDPOINTS } from '../utils/config.js';
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ const Login = () => {
         const credentials = { employeeId, email, password };
         // Replace loginUser with your login API call
         try {
-            const response = await fetch('http://localhost:5002/api/login', {
+            const response = await fetch(API_ENDPOINTS.LOGIN, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
