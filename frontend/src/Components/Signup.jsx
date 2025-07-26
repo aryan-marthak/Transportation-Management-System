@@ -11,6 +11,7 @@ const Signup = () => {
 
     const [department, setDepartment] = useState("");
     const [employeeId, setEmployeeId] = useState("");
+    const [phoneNo, setPhoneNo] = useState("");
     const [errors, setErrors] = useState("");
     const navigate = useNavigate();
     const setUser = useAuthStore((state) => state.setUser);
@@ -32,6 +33,8 @@ const Signup = () => {
         if (!email) newErrors.email = "Email is required";
         else if (!email.endsWith("@adityabirla.com")) newErrors.email = "Only @adityabirla.com emails are allowed";
         if (!department) newErrors.department = "Department is required";
+        if (!phoneNo) newErrors.phoneNo = "Mobile number is required";
+        else if (!/^\d{10}$/.test(phoneNo)) newErrors.phoneNo = "Enter a valid 10-digit mobile number";
         if (!password) newErrors.password = "Password is required";
         if (!confirmPassword) newErrors.confirmPassword = "Password is required";
         if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
@@ -47,7 +50,8 @@ const Signup = () => {
                 name,
                 email,
                 password,
-                department
+                department,
+                phoneNo
             });
             if (response.data.message) {
                 setShowOtpInput(true);
@@ -156,6 +160,19 @@ const Signup = () => {
                             )}
                         </div>
                         <div className="mb-4">
+                            <label className="block mb-1 text-gray-700">Mobile Number</label>
+                            <input
+                                type="text"
+                                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"
+                                value={phoneNo}
+                                onChange={(e) => setPhoneNo(e.target.value)}
+                                placeholder="Enter your 10-digit mobile number"
+                            />
+                            {errors.phoneNo && (
+                                <p className="text-red-500 text-sm mt-1">{errors.phoneNo}</p>
+                            )}
+                        </div>
+                        <div className="mb-4">
                             <label className="block mb-1 text-gray-700">Password</label>
                             <input
                                 type="password"
@@ -197,7 +214,8 @@ const Signup = () => {
                 {showOtpInput && (
                     <>
                         <div className="mb-4">
-                            <label className="block mb-1 text-gray-700">Enter OTP sent to your email</label>
+                            <label className="block mb-1 text-gray-700">Enter OTP sent to your email {signupEmail} </label>
+                            <span className="text-xs text-gray-500">(check your spam folder)</span>
                             <input
                                 type="text"
                                 className="w-full px-3 py-2 border rounded focus:outline-none focus:ring focus:border-blue-300"

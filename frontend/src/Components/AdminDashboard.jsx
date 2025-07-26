@@ -195,8 +195,10 @@ const AdminDashboard = () => {
   };
 
   // Split requests
-  const activeRequests = tripRequests.filter(req => req.status === 'Pending');
-  const pastRequests = tripRequests.filter(req => req.status !== 'Pending');
+  const activeRequests = tripRequests.filter(req => req.status === 'Pending').filter(req => req.status == 'Pending').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const pastRequests = tripRequests
+    .filter(req => req.status !== 'Pending')
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -302,6 +304,14 @@ const AdminDashboard = () => {
                 <div>
                   <span className="text-gray-600">No. of Passengers:</span>
                   <span className="ml-2 font-medium">{selectedRequest.numberOfPassengers}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Employee Phone No.:</span>
+                  <span className="ml-2 font-medium">{selectedRequest.createdBy?.phoneNo || 'None'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Employee Remark:</span>
+                  <span className="ml-2 font-medium">{selectedRequest.remarks || 'None'}</span>
                 </div>
               </div>
             </div>

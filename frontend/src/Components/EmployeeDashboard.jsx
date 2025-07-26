@@ -127,9 +127,13 @@ const EmployeeDashboard = () => {
     navigate('/login');
   };
 
-  // Split requests
-  const activeRequests = requests.filter(request => isRequestActive(request.status));
-  const pastRequests = requests.filter(request => isRequestPast(request.status));
+  // Split requests and sort by creation date (newest first)
+  const activeRequests = requests
+    .filter(request => isRequestActive(request.status))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const pastRequests = requests
+    .filter(request => isRequestPast(request.status))
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   return (
     <div className="min-h-screen bg-gray-50">

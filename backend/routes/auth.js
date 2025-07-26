@@ -18,7 +18,7 @@ function generateOtp() {
 
 // Signup with OTP initiation
 router.post('/signup', async (req, res) => {
-    const { employeeId, name, email, password, department } = req.body;
+    const { employeeId, name, email, password, department, phoneNo } = req.body;
     if (!employeeId || !name || !email || !password || !department) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
@@ -38,6 +38,7 @@ router.post('/signup', async (req, res) => {
             email,
             password,
             department,
+            phoneNo,
             otp,
             expires: Date.now() + 10 * 60 * 1000
         };
@@ -74,6 +75,7 @@ router.post('/verify-otp', async (req, res) => {
             email: pending.email,
             password: pending.password,
             department: pending.department,
+            phoneNo: pending.phoneNo,
             role: 'employee'
         });
         await employee.save();
