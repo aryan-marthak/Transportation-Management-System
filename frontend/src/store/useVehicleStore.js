@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { API_ENDPOINTS } from '../utils/config.js';
 
 const useVehicleStore = create((set) => ({
   vehicles: [],
@@ -8,7 +9,7 @@ const useVehicleStore = create((set) => ({
   fetchVehicles: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch('http://localhost:5002/api/vehicles');
+      const res = await fetch(API_ENDPOINTS.VEHICLES);
       if (!res.ok) throw new Error('Failed to fetch vehicles');
       const data = await res.json();
       set({ vehicles: data, loading: false });
@@ -20,7 +21,7 @@ const useVehicleStore = create((set) => ({
   addVehicle: async (vehicle) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch('http://localhost:5002/api/vehicles', {
+      const res = await fetch(API_ENDPOINTS.VEHICLES, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(vehicle),
@@ -39,7 +40,7 @@ const useVehicleStore = create((set) => ({
   deleteVehicle: async (vehicleId) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`http://localhost:5002/api/vehicles/${vehicleId}`, {
+      const res = await fetch(`${API_ENDPOINTS.VEHICLES}/${vehicleId}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete vehicle');
@@ -58,7 +59,7 @@ const useVehicleStore = create((set) => ({
 useVehicleStore.toggleVehicleOutOfService = async (vehicleId, outOfService) => {
   useVehicleStore.setState({ loading: true, error: null });
   try {
-    const res = await fetch(`http://localhost:5002/api/vehicles/${vehicleId}/toggleStatus`, {
+    const res = await fetch(API_ENDPOINTS.VEHICLE_TOGGLE_STATUS(vehicleId), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ outOfService }),

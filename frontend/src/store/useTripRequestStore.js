@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { API_ENDPOINTS } from '../utils/config.js';
 
 const useTripRequestStore = create((set) => ({
   tripRequests: [],
@@ -8,7 +9,7 @@ const useTripRequestStore = create((set) => ({
   fetchTripRequests: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch('http://localhost:5002/api/tripRequest', { credentials: 'include' });
+      const res = await fetch(API_ENDPOINTS.TRIP_REQUESTS, { credentials: 'include' });
       if (!res.ok) throw new Error('Failed to fetch trip requests');
       const data = await res.json();
       set({ tripRequests: data, loading: false });
@@ -20,7 +21,7 @@ const useTripRequestStore = create((set) => ({
   addTripRequest: async (tripRequest) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch('http://localhost:5002/api/tripRequest', {
+      const res = await fetch(API_ENDPOINTS.TRIP_REQUESTS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -40,7 +41,7 @@ const useTripRequestStore = create((set) => ({
   approveTripRequest: async (requestId, { vehicleId, driverId, remarks, isOutside, outsideVehicle, outsideDriver }) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`http://localhost:5002/api/tripRequest/${requestId}/approve`, {
+      const res = await fetch(API_ENDPOINTS.TRIP_REQUEST_APPROVE(requestId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -57,7 +58,7 @@ const useTripRequestStore = create((set) => ({
   rejectTripRequest: async (requestId, remarks) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`http://localhost:5002/api/tripRequest/${requestId}/reject`, {
+      const res = await fetch(API_ENDPOINTS.TRIP_REQUEST_REJECT(requestId), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -74,7 +75,7 @@ const useTripRequestStore = create((set) => ({
   completeTripRequest: async (requestId) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`http://localhost:5002/api/tripRequest/${requestId}/complete`, {
+      const res = await fetch(API_ENDPOINTS.TRIP_REQUEST_COMPLETE(requestId), {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

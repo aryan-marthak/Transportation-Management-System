@@ -6,6 +6,7 @@ import ActiveRequest from './EmployeeComponents/ActiveRequest.jsx';
 import PastRequest from './EmployeeComponents/PastRequest.jsx';
 import NewRequest from './EmployeeComponents/NewRequest.jsx';
 import { CarFront, ArrowRight, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { API_ENDPOINTS } from '../utils/config.js';
 
 // Helper function to format dates as '7 July 2025'
 const formatDate = (dateString) => {
@@ -38,7 +39,7 @@ const EmployeeDashboard = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const response = await fetch('http://localhost:5002/api/tripRequest', {
+        const response = await fetch(API_ENDPOINTS.TRIP_REQUESTS, {
           credentials: 'include'
         });
         if (response.ok) {
@@ -58,7 +59,7 @@ const EmployeeDashboard = () => {
     if (formData.pickupPoint && formData.destination && formData.startDate && formData.startTime && formData.purpose && formData.designation && formData.numberOfPassengers) {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:5002/api/tripRequest', {
+        const response = await fetch(API_ENDPOINTS.TRIP_REQUESTS, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

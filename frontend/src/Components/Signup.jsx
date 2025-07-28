@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import useAuthStore from '../store/useAuthStore';
+import { API_ENDPOINTS } from '../utils/config.js';
 
 const Signup = () => {
     const [name, setName] = useState("");
@@ -45,7 +46,7 @@ const Signup = () => {
         setLoading(true);
         setErrors("");
         try {
-            const response = await axios.post("http://localhost:5002/api/signup", {
+            const response = await axios.post(API_ENDPOINTS.SIGNUP, {
                 employeeId,
                 name,
                 email,
@@ -70,7 +71,7 @@ const Signup = () => {
         setOtpLoading(true);
         setOtpError("");
         try {
-            const response = await axios.post("http://localhost:5002/api/verify-otp", {
+            const response = await axios.post(API_ENDPOINTS.VERIFY_OTP, {
                 email: signupEmail,
                 otp
             });

@@ -274,16 +274,41 @@ TWILIO_PHONE_NUMBER=your_twilio_phone_number
 ```bash
 # Install all dependencies
 npm run install-all
-
-# Start both frontend and backend
-npm run dev
-
-# Or start individually
-npm run dev-backend  # Backend on http://localhost:5002
-npm run dev-frontend # Frontend on http://localhost:5173
 ```
 
-#### Docker Deployment
+#### 3. Configure environment variables
+- Copy the provided `.env.example` file in the `backend` directory to `.env`:
+  ```bash
+  cd backend
+  cp .env.example .env
+  ```
+- Edit `.env` to add your MongoDB Atlas URI, JWT secret, and desired PORT:
+  ```env
+  MONGODB_URI=your_mongodb_atlas_connection_string
+  JWT_SECRET=your_very_secret_key_here
+  PORT=5002
+  ```
+
+##### How to generate a MongoDB Atlas URI:
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up or log in.
+2. Create a new project and cluster (free tier is fine).
+3. In your cluster, click "Connect" > "Connect your application".
+4. Copy the provided connection string (it looks like `mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority`).
+5. Replace `<username>`, `<password>`, and any placeholder values with your actual credentials and database name.
+6. Paste this string as the value for `MONGODB_URI` in your `.env` file.
+
+##### JWT_SECRET configuration:
+- `JWT_SECRET` can be **any random string**. It is used to sign and verify authentication tokens.
+- Example values:
+  - `JWT_SECRET=supersecret`
+  - `JWT_SECRET=myrandomstring123`
+  - `JWT_SECRET=ThisIsAReallyLongAndRandomSecretKey!@#123`
+- For production, use a long, unpredictable string.
+
+##### PORT configuration:
+- The default port is `5002`. You can change it in your `.env` file if needed.
+
+#### 4. Start the application
 ```bash
 # Build and run with Docker Compose
 docker-compose up --build

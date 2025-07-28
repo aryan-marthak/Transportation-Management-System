@@ -23,7 +23,7 @@ cron.schedule('* * * * *', async () => {
                 await driverModel.findByIdAndUpdate(trip.vehicleDetails.driverId, { status: 'available' });
             }
             if (trip.vehicleDetails?.vehicleId) {
-                await vehicleModel.findByIdAndUpdate(trip.vehicleDetails.vehicleId, { status: 'available' });
+                await vehicleModel.findByIdAndUpdate(trip.vehicleDetails.vehicleId, { status: 'Available' });
             }
         }
         if (tripsToComplete.length > 0) {

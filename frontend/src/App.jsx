@@ -64,6 +64,10 @@ function App() {
         path="/"
         element={<Navigate to={user ? (user.role === 'admin' ? '/admin-dashboard' : '/employee-dashboard') : '/login'} />}
       />
+      <Route
+        path="*"
+        element={<Navigate to="/" />}
+      />
     </Routes>
   )
 }
