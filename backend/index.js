@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.js";
 import driverRoutes from "./routes/driver.route.js";
 import vehicleRoutes from "./routes/vehicle.route.js";
 import tripRequestRoutes from "./routes/trip.request.js";
+import './Scheduler/scheduler.js'; // Import the scheduler
 
 const app = express();
 dotenv.config();
