@@ -5,6 +5,8 @@ import driverModel from "../models/driver.model.js";
 import vehicleModel from "../models/vehicle.model.js";
 import { sendMail } from '../utils/mailer.js';
 import { sendSMS } from '../utils/twiliosms.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router = express.Router();
 
@@ -31,7 +33,7 @@ router.post('/', secureRoute, async (req, res) => {
         res.status(201).json(savedTripRequest);
         // Send email to transport head in the background
         sendMail(
-            'nilesh.marthak@adityabirla.com',
+            process.env.TRANSPORT_HEAD_EMAIL ,
             'New Trip Request Created',
             `A new trip request has been created by ${req.user.name} (${req.user.email}).\n\nDestination: ${destination}\nPurpose: ${purpose}\nDepartment: ${req.user.department}\nPickup Point: ${pickupPoint}\nStart: ${startDate} ${startTime}\nEnd: ${endDate}\nNumber of Passengers: ${numberOfPassengers}\nRemarks: ${remarks || 'None'}\n\nPlease review the request in the system.`
         ).catch(mailError => {
