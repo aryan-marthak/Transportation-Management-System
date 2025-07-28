@@ -10,6 +10,7 @@ const createTokenAndSaveCookie = (userId, res) => {
         sameSite: "none", // csrf
         path: '/',
         partitioned: true,
+        maxAge: 10 * 24 * 60 * 60 * 1000, // 10 days in milliseconds
     });
 };
 export default createTokenAndSaveCookie;
