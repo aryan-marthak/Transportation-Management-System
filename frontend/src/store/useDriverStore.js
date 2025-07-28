@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { API_ENDPOINTS } from '../utils/config.js';
 
 const useDriverStore = create((set) => ({
   drivers: [],
@@ -8,7 +9,7 @@ const useDriverStore = create((set) => ({
   fetchDrivers: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch('http://localhost:5002/api/drivers');
+      const res = await fetch(API_ENDPOINTS.DRIVERS);
       if (!res.ok) throw new Error('Failed to fetch drivers');
       const data = await res.json();
       set({ drivers: data, loading: false });
@@ -20,7 +21,7 @@ const useDriverStore = create((set) => ({
   addDriver: async (driver) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch('http://localhost:5002/api/drivers', {
+      const res = await fetch(API_ENDPOINTS.DRIVERS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(driver),
@@ -39,7 +40,7 @@ const useDriverStore = create((set) => ({
   deleteDriver: async (driverId) => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(`http://localhost:5002/api/drivers/${driverId}`, {
+      const res = await fetch(`${API_ENDPOINTS.DRIVERS}/${driverId}`, {
         method: 'DELETE',
       });
       if (!res.ok) throw new Error('Failed to delete driver');
@@ -59,7 +60,7 @@ const useDriverStore = create((set) => ({
 useDriverStore.toggleDriverUnavailable = async (driverId, temporarilyUnavailable) => {
   useDriverStore.setState({ loading: true, error: null });
   try {
-    const res = await fetch(`http://localhost:5002/api/drivers/${driverId}/toggleUnavailable`, {
+    const res = await fetch(API_ENDPOINTS.DRIVER_TOGGLE_UNAVAILABLE(driverId), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ temporarilyUnavailable }),

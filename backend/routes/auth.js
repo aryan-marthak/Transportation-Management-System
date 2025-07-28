@@ -130,8 +130,9 @@ router.post('/logout', (req, res) => {
     res.clearCookie('jwt', {
         httpOnly: true,
         secure: true,
-        sameSite: 'strict',
+        sameSite: 'none',
         path: '/',
+        partitioned: true,
     }); 
     res.json({ message: 'Logged out' });
 });
