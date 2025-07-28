@@ -9,6 +9,7 @@ const createTokenAndSaveCookie = (userId, res) => {
         secure: true,
         sameSite: "none", // csrf
         path: '/',
+        partitioned: true,
     });
 };
 export default createTokenAndSaveCookie;
