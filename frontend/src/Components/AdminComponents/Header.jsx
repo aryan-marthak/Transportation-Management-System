@@ -1,5 +1,4 @@
 import React from 'react';
-import abg_logo from '../../../public/final.png';
 import { LogOut } from 'lucide-react';
 
 const Header = ({ user, handleLogout }) => (
@@ -28,7 +27,7 @@ const Header = ({ user, handleLogout }) => (
         {/* Logo and Title Section - now a positioning context */}
         <div className="w-full md:w-auto flex items-center justify-start relative">
           <img
-            src={abg_logo}
+            src="/final.png"
             alt="ABG Logo"
             // THE KEY FIX: Absolute on mobile, reset to relative on desktop
             className="absolute left-0 top-1/2 pt-2  -translate-y-1/2 md:relative md:left-auto md:top-auto md:transform-none h-28 md:h-48 object-contain drop-shadow-md"
