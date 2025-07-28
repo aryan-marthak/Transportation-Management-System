@@ -6,15 +6,14 @@ const Navbar = ({ activeTab, setActiveTab }) => {
   // Refs for each button to measure their position and size
   const navRef = useRef(null);
   const itemRefs = useRef([]);
-
   // State to hold the style for the sliding active indicator
   const [sliderStyle, setSliderStyle] = useState({});
-
+  
   const navItems = [
-    { id: 'active-requests', label: 'Active Requests', icon: FileText },
-    { id: 'past-requests', label: 'Past Requests', icon: History },
-    { id: 'vehicles', label: 'Vehicles', icon: Car },
-    { id: 'drivers', label: 'Drivers', icon: Users },
+    { id: 'active-requests', label: 'Active Requests', icon: FileText, shortLabel: 'Active' },
+    { id: 'past-requests', label: 'Past Requests', icon: History, shortLabel: 'History' },
+    { id: 'vehicles', label: 'Vehicles', icon: Car, shortLabel: 'Vehicles' },
+    { id: 'drivers', label: 'Drivers', icon: Users, shortLabel: 'Drivers' },
   ];
 
   // This effect runs whenever the activeTab changes or the component resizes.
@@ -27,7 +26,7 @@ const Navbar = ({ activeTab, setActiveTab }) => {
     const updateSlider = () => {
       const activeIndex = navItems.findIndex(item => item.id === activeTab);
       const activeItemEl = itemRefs.current[activeIndex];
-      
+     
       if (activeItemEl) {
         const { offsetLeft, offsetWidth } = activeItemEl;
         setSliderStyle({
@@ -50,21 +49,22 @@ const Navbar = ({ activeTab, setActiveTab }) => {
 
   return (
     <div className="relative bg-white/70 backdrop-blur-sm p-2 rounded-xl shadow-md border border-gray-200">
-      <nav ref={navRef} className="flex flex-col sm:flex-row justify-center items-center gap-2">
+      <nav ref={navRef} className="flex justify-center items-center gap-1 sm:gap-2">
         {/* Map through the navigation items to create buttons */}
         {navItems.map((item, index) => (
           <button
             key={item.id}
             ref={el => itemRefs.current[index] = el} // Store ref for each button
             onClick={() => setActiveTab(item.id)}
-            className={`relative z-10 flex items-center justify-center space-x-2 w-full sm:w-auto px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors duration-200 ease-out
-              ${activeTab === item.id 
+            className={`relative z-10 flex flex-col sm:flex-row items-center justify-center sm:space-x-2 flex-1 sm:flex-none px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 ease-out min-w-0
+              ${activeTab === item.id
                 ? 'text-white' // Active text is white
                 : 'text-gray-600 hover:bg-gray-200/50' // Inactive text and hover effect
               }`}
           >
-            <item.icon className="h-5 w-5" />
-            <span>{item.label}</span>
+            <item.icon className="h-4 w-4 sm:h-5 sm:w-5 mb-1 sm:mb-0" />
+            <span className="block sm:hidden">{item.shortLabel}</span>
+            <span className="hidden sm:block">{item.label}</span>
           </button>
         ))}
       </nav>

@@ -60,17 +60,25 @@ npm run install-all
 ```
 
 #### 3. Configure environment variables
-- Copy the provided `.env.example` file in the `backend` directory to `.env`:
-  ```bash
-  cd backend
-  cp .env.example .env
-  ```
-- Edit `.env` to add your MongoDB Atlas URI, JWT secret, and desired PORT:
-  ```env
-  MONGODB_URI=your_mongodb_atlas_connection_string
-  JWT_SECRET=your_very_secret_key_here
-  PORT=5002
-  ```
+**For detailed environment setup instructions, see [ENVIRONMENT_SETUP.md](./ENVIRONMENT_SETUP.md)**
+
+Quick setup:
+- **Backend:** Copy `backend/env.example` to `backend/.env` and configure your values
+- **Frontend:** Copy `frontend/env.example` to `frontend/.env` and configure your values
+
+Example backend `.env`:
+```env
+MONGODB_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_very_secret_key_here
+PORT=5002
+FRONTEND_URL=http://localhost:5173
+```
+
+Example frontend `.env`:
+```env
+VITE_API_URL=http://localhost:5002
+VITE_NODE_ENV=development
+```
 
 ##### How to generate a MongoDB Atlas URI:
 1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up or log in.
