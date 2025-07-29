@@ -262,7 +262,7 @@ This Transportation Management System (TMS) is designed for organizations to eff
 
 #### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/[username]/Transportation-Management-System.git
+git clone https://github.com/aryan-marthak/Transportation-Management-System.git
 cd Transportation-Management-System
 ```
 
@@ -355,7 +355,7 @@ npm run dev
 
 #### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/[username]/Transportation-Management-System.git
+git clone https://github.com/aryan-marthak/Transportation-Management-System.git
 cd Transportation-Management-System
 ```
 
