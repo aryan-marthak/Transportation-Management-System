@@ -248,75 +248,225 @@ This Transportation Management System (TMS) is designed for organizations to eff
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- MongoDB Atlas account
-- Gmail account (for email notifications)
-- Twilio account (for SMS notifications)
+- **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
+- **Git** - [Download here](https://git-scm.com/)
+- **MongoDB Atlas account** - [Sign up here](https://www.mongodb.com/cloud/atlas)
+- **Gmail account** (for email notifications)
+- **Twilio account** (for SMS notifications) - [Sign up here](https://www.twilio.com/)
 
-### Environment Configuration
-Create `.env` file in the backend directory:
+---
+
+## 📦 Installation Methods
+
+### Method 1: Node.js Installation (Recommended for Development)
+
+#### Step 1: Clone the Repository
+```bash
+git clone https://github.com/[username]/Transportation-Management-System.git
+cd Transportation-Management-System
+```
+
+#### Step 2: Install Dependencies
+```bash
+# Install all dependencies (backend + frontend)
+npm run install-all
+```
+
+#### Step 3: Configure Environment Variables
+
+**Backend Configuration:**
+```bash
+cd backend
+copy env.example .env
+```
+
+Edit `backend/.env` with your values:
 ```env
-MONGODB_URI=your_mongodb_atlas_connection_string
-JWT_TOKEN=your_jwt_secret_key
-ADMIN_USER=your_admin_email@gmail.com
-ADMIN_PASS=your_gmail_app_password
-TRANSPORT_HEAD_EMAIL=transport.head@adityabirla.com
+# Server Configuration
 PORT=5002
-(Optional for SMS notifications)
-TWILIO_SID=your_twilio_account_sid
+NODE_ENV=development
+
+# Database (MongoDB Atlas)
+MONGODB_URI=mongodb+srv://your-username:your-password@your-cluster.mongodb.net/your-database?retryWrites=true&w=majority
+
+# CORS Configuration
+FRONTEND_URL=http://localhost:5173
+
+# JWT Configuration (Create a random string)
+JWT_TOKEN=your_super_secret_jwt_key_here_make_it_long_and_random_12345
+
+# Admin email (Gmail account for sending notifications)
+ADMIN_USER=your-email@gmail.com
+ADMIN_PASS=your-gmail-app-password
+
+# Transport head email
+TRANSPORT_HEAD_EMAIL=transport@yourcompany.com
+
+# Twilio Configuration (Optional)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE_NUMBER=your_twilio_phone_number
 ```
 
-### Installation & Running
-
-#### Local Development
+**Frontend Configuration:**
 ```bash
-# Install all dependencies
-npm run install-all
+cd ../frontend
+copy env.example .env
 ```
 
-#### 3. Configure environment variables
-- Copy the provided `.env.example` file in the `backend` directory to `.env`:
-  ```bash
-  cd backend
-  cp .env.example .env
-  ```
-- Edit `.env` to add your MongoDB Atlas URI, JWT secret, and desired PORT:
-  ```env
-  MONGODB_URI=your_mongodb_atlas_connection_string
-  JWT_SECRET=your_very_secret_key_here
-  PORT=5002
-  ```
+Edit `frontend/.env`:
+```env
+# API Configuration
+VITE_API_URL=http://localhost:5002
 
-##### How to generate a MongoDB Atlas URI:
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) and sign up or log in.
-2. Create a new project and cluster (free tier is fine).
-3. In your cluster, click "Connect" > "Connect your application".
-4. Copy the provided connection string (it looks like `mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority`).
-5. Replace `<username>`, `<password>`, and any placeholder values with your actual credentials and database name.
-6. Paste this string as the value for `MONGODB_URI` in your `.env` file.
+# Environment
+VITE_NODE_ENV=development
 
-##### JWT_SECRET configuration:
-- `JWT_SECRET` can be **any random string**. It is used to sign and verify authentication tokens.
-- Example values:
-  - `JWT_SECRET=supersecret`
-  - `JWT_SECRET=myrandomstring123`
-  - `JWT_SECRET=ThisIsAReallyLongAndRandomSecretKey!@#123`
-- For production, use a long, unpredictable string.
+# Optional: Other frontend configurations
+VITE_APP_NAME=Transportation Management System
+```
 
-##### PORT configuration:
-- The default port is `5002`. You can change it in your `.env` file if needed.
+#### Step 4: Start the Application
 
-#### 4. Start the application
+**Option A: Start Both Together (Recommended)**
 ```bash
-# Build and run with Docker Compose
+# From root directory
+npm run dev
+```
+
+**Option B: Start Separately**
+```bash
+# Terminal 1 - Backend
+cd backend
+npm start
+
+# Terminal 2 - Frontend
+cd frontend
+npm run dev
+```
+
+#### Step 5: Access the Application
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5002
+
+---
+
+### Method 2: Docker Installation (Recommended for Production)
+
+#### Step 1: Clone the Repository
+```bash
+git clone https://github.com/[username]/Transportation-Management-System.git
+cd Transportation-Management-System
+```
+
+#### Step 2: Configure Environment Variables
+```bash
+# Copy environment example
+copy backend/env.example .env
+```
+
+Edit `.env` with your production values:
+```env
+# Server Configuration
+PORT=5002
+NODE_ENV=production
+
+# Database (MongoDB Atlas)
+MONGODB_URI=mongodb+srv://your-username:your-password@your-cluster.mongodb.net/your-database?retryWrites=true&w=majority
+
+# CORS Configuration
+FRONTEND_URL=http://localhost:5173
+
+# JWT Configuration
+JWT_TOKEN=your_super_secret_jwt_key_here_make_it_long_and_random_12345
+
+# Admin email
+ADMIN_USER=your-email@gmail.com
+ADMIN_PASS=your-gmail-app-password
+
+# Transport head email
+TRANSPORT_HEAD_EMAIL=transport@yourcompany.com
+
+# Twilio Configuration (Optional)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+```
+
+#### Step 3: Build and Run with Docker
+```bash
+# Build and start all services
 docker-compose up --build
 
-# Access the application
-# Frontend: http://localhost:5173
-# Backend API: http://localhost:5002
+# Or run in background
+docker-compose up -d --build
 ```
+
+#### Step 4: Access the Application
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5002
+
+#### Step 5: Stop the Application
+```bash
+# Stop all containers
+docker-compose down
+
+# Stop and remove volumes
+docker-compose down -v
+```
+
+---
+
+## 🔧 Environment Setup Guide
+
+### MongoDB Atlas Setup
+1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
+2. Create a free account and new project
+3. Create a new cluster (free tier is fine)
+4. Click "Connect" → "Connect your application"
+5. Copy the connection string
+6. Replace `<username>`, `<password>`, and `<database>` with your values
+
+### Gmail App Password Setup
+1. Go to [Google Account Security](https://myaccount.google.com/security)
+2. Enable 2-Step Verification
+3. Go to "App passwords"
+4. Generate new app password for "Mail"
+5. Use this password as `ADMIN_PASS`
+
+### JWT Token Generation
+- Create any random string (minimum 20 characters)
+- Example: `my_super_secret_jwt_key_for_tms_2024_12345`
+- Keep this secret and secure
+
+---
+
+## ✅ Verification Checklist
+
+After installation, verify:
+- [ ] Frontend accessible at http://localhost:5173
+- [ ] Backend API accessible at http://localhost:5002
+- [ ] Can create a new account (signup)
+- [ ] Can login with created account
+- [ ] Can access employee/admin dashboard
+- [ ] Database connection working
+- [ ] Email notifications working (if configured)
+
+---
+
+## 🚨 Troubleshooting
+
+### Common Issues
+- **Port already in use**: Change ports in `.env` files
+- **MongoDB connection failed**: Check connection string and network
+- **Email not working**: Verify Gmail app password
+- **Docker build fails**: Check Docker installation and permissions
+
+### Getting Help
+- Check the console/terminal for error messages
+- Verify all environment variables are set correctly
+- Ensure all prerequisites are installed
+- Contact the development team for support
 
 ---
 

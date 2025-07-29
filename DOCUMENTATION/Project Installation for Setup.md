@@ -32,6 +32,43 @@
 
 ---
 
+
+**QUICK TIPS**
+
+*** Steps to follow inside terminal ***
+
+## From root directory ##
+
+> npm run install-all
+
+
+## Backend setup ##
+
+> cd backend
+> copy env.example .env
+# Edit .env file with production values
+
+
+## Frontend setup ##
+
+> cd ../frontend
+> copy env.example .env
+# Edit .env file with production values
+> npm run build
+
+
+## Start backend in production mode ##
+
+> cd ../backend
+> npm run prod
+
+
+## In a new terminal window, start frontend ##
+> cd frontend
+> npm run preview
+
+
+
 ## 🚀 Step-by-Step Installation Process
 
 ### Step 1: Verify Software Installation
@@ -58,7 +95,7 @@ cd Transportation-Project
 ### Step 3: Download the Project
 
 ```bash
-git clone https://github.com/[username]/Transportation-Management-System.git
+git clone https://github.com/aryan-marthak/Transportation-Management-System.git
 cd Transportation-Management-System
 ```
 
@@ -324,3 +361,4 @@ If you encounter issues:
 - [ ] Application survives server restart
 
 **🎉 If all checkboxes are marked, the installation is successful!** 
+
