@@ -1,0 +1,463 @@
+IT Installation Guide - Transportation Management System
+================================================================
+
+Prerequisites Checklist
+======================
+
+IMPORTANT: Install these software in EXACTLY this order!
+
+1. Required Software Downloads
+-----------------------------
+
+A. Node.js (Version 18 or higher)
+- Download Link: https://nodejs.org/en/download/
+- Choose: "LTS" version (Long Term Support)
+- File Type: Windows Installer (.msi) for Windows
+- Installation: Double-click and follow the wizard (accept all defaults)
+
+B. Git (Version Control)
+- Download Link: https://git-scm.com/download/win
+- Choose: Windows version
+- File Type: Windows Installer (.exe)
+- Installation: Double-click and follow the wizard (accept all defaults)
+
+C. Visual Studio Code (Code Editor)
+- Download Link: https://code.visualstudio.com/download
+- Choose: Windows version
+- File Type: Windows Installer (.exe)
+- Installation: Double-click and follow the wizard (accept all defaults)
+
+D. MongoDB Compass (Database GUI - Optional but Recommended)
+- Download Link: https://www.mongodb.com/try/download/compass
+- Choose: Windows version
+- File Type: Windows Installer (.exe)
+- Installation: Double-click and follow the wizard (accept all defaults)
+
+Step-by-Step Installation Process
+=================================
+
+Step 1: Verify Software Installation
+-----------------------------------
+
+Open Command Prompt (Windows + R, type cmd, press Enter) and run these commands:
+
+# Check Node.js installation
+node --version
+# Should show something like: v18.17.0
+
+# Check npm installation
+npm --version
+# Should show something like: 9.6.7
+
+# Check Git installation
+git --version
+# Should show something like: git version 2.40.0.windows.1
+
+If all commands show version numbers, proceed to Step 2
+If any command shows "not recognized", reinstall that software
+
+Step 2: Create Project Directory
+-------------------------------
+
+# Navigate to your desired location (example: Desktop)
+cd C:\Users\[YourUsername]\Desktop
+
+# Create a new folder for the project
+mkdir Transportation-Project
+cd Transportation-Project
+
+Step 3: Download the Project
+---------------------------
+
+# Clone the project from GitHub (replace with actual repository URL)
+git clone https://github.com/[username]/Transportation-Management-System.git
+
+# Navigate into the project folder
+cd Transportation-Management-System
+
+If you don't have the GitHub repository, ask the developer for the project files and extract them to this folder.
+
+Step 4: Set Up Backend Environment
+---------------------------------
+
+# Navigate to backend folder
+cd backend
+
+# Copy the environment example file
+copy env.example .env
+
+Now edit the .env file:
+
+1. Right-click on .env file
+2. Select "Open with" -> "Notepad" or "Visual Studio Code"
+3. Replace the content with your actual values:
+
+# Server Configuration
+PORT=5002
+NODE_ENV=development
+
+# Database (Use MongoDB Atlas for cloud database)
+MONGODB_URI=mongodb+srv://[username]:[password]@[cluster].mongodb.net/[database]?retryWrites=true&w=majority
+
+# CORS Configuration
+FRONTEND_URL=http://localhost:5173
+
+# JWT Configuration (Create a random string)
+JWT_TOKEN=your_super_secret_jwt_key_here_make_it_long_and_random_12345
+
+# Admin email (Gmail account for sending notifications)
+ADMIN_USER=your_email@gmail.com
+ADMIN_PASS=your_gmail_app_password
+
+# Transport head email (who receives new trip notifications)
+TRANSPORT_HEAD_EMAIL=transport_head@adityabirla.com
+
+# Twilio Configuration (Optional - for SMS notifications)
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+
+How to get these values:
+
+A. MongoDB Atlas Setup (Cloud Database)
+1. Go to https://www.mongodb.com/cloud/atlas
+2. Create free account
+3. Create new cluster (free tier)
+4. Click "Connect" -> "Connect your application"
+5. Copy the connection string
+6. Replace [username], [password], [cluster], [database] with your values
+
+B. Gmail App Password (for email notifications)
+1. Go to https://myaccount.google.com/security
+2. Enable 2-Step Verification
+3. Go to "App passwords"
+4. Generate new app password for "Mail"
+5. Use this password as ADMIN_PASS
+
+C. JWT Token (Security Key)
+- Create any random string (minimum 20 characters)
+- Example: my_super_secret_jwt_key_for_tms_2024_12345
+
+Step 5: Install Backend Dependencies
+-----------------------------------
+
+# Make sure you're in the backend folder
+cd backend
+
+# Install all required packages
+npm install
+
+This may take 2-5 minutes. Wait for completion.
+
+Step 6: Set Up Frontend Environment
+----------------------------------
+
+# Go back to project root
+cd ..
+
+# Navigate to frontend folder
+cd frontend
+
+# Copy the environment example file
+copy env.example .env
+
+Edit the frontend .env file:
+
+# API Configuration
+VITE_API_URL=http://localhost:5002
+
+# Environment
+VITE_NODE_ENV=development
+
+# Optional: Other frontend configurations
+VITE_APP_NAME=Transportation Management System
+
+Step 7: Install Frontend Dependencies
+------------------------------------
+
+# Make sure you're in the frontend folder
+cd frontend
+
+# Install all required packages
+npm install
+
+This may take 3-7 minutes. Wait for completion.
+
+Running the Application
+=======================
+
+DEVELOPMENT MODE (For Testing)
+-----------------------------
+
+Method 1: Using Root Package Scripts (Recommended)
+-------------------------------------------------
+
+# Go back to project root
+cd ..
+
+# Install root dependencies
+npm install
+
+# Start both frontend and backend together
+npm run dev
+
+Method 2: Running Separately
+---------------------------
+
+Terminal 1 (Backend):
+cd backend
+npm start
+
+Terminal 2 (Frontend):
+cd frontend
+npm run dev
+
+PRODUCTION MODE (For Company Server - 24/7 Running)
+==================================================
+
+IMPORTANT: DO NOT keep terminal windows open 24/7 for production!
+
+Step 1: Install PM2 Process Manager
+----------------------------------
+
+# Install PM2 globally
+npm install -g pm2
+
+Step 2: Build Frontend for Production
+------------------------------------
+
+# Navigate to frontend folder
+cd frontend
+
+# Build the application for production
+npm run build
+
+# This creates a 'dist' folder with optimized files
+
+Step 3: Start Backend with PM2
+-----------------------------
+
+# Navigate to backend folder
+cd ../backend
+
+# Start backend as a daemon process
+pm2 start index.js --name "tms-backend" --port 5003
+
+# Set environment variables for production
+pm2 set tms-backend:MONGODB_URI "your-production-mongodb-uri"
+pm2 set tms-backend:JWT_TOKEN "your-production-jwt-secret"
+pm2 set tms-backend:ADMIN_USER "your-production-email"
+pm2 set tms-backend:ADMIN_PASS "your-production-gmail-password"
+pm2 set tms-backend:TRANSPORT_HEAD_EMAIL "transport@company.com"
+
+Step 4: Start Frontend with PM2
+------------------------------
+
+# Navigate to frontend folder
+cd ../frontend
+
+# Serve the built frontend files
+pm2 serve dist 80 --name "tms-frontend"
+
+# Or if port 80 is busy, use another port like 3000
+pm2 serve dist 3000 --name "tms-frontend"
+
+Step 5: Save PM2 Configuration
+-----------------------------
+
+# Save current PM2 processes
+pm2 save
+
+# Set PM2 to start automatically on server reboot
+pm2 startup
+
+# Follow the instructions that appear
+
+Step 6: Verify Everything is Running
+-----------------------------------
+
+# Check status of all processes
+pm2 status
+
+# Should show both tms-backend and tms-frontend as "online"
+
+# View logs if needed
+pm2 logs tms-backend
+pm2 logs tms-frontend
+
+Step 7: Access the Application
+-----------------------------
+
+# Frontend: http://your-server-ip (or http://your-server-ip:3000 if using port 3000)
+# Backend API: http://your-server-ip:5003
+
+PM2 Management Commands
+======================
+
+# View all running processes
+pm2 status
+
+# Restart a specific process
+pm2 restart tms-backend
+pm2 restart tms-frontend
+
+# Stop a process
+pm2 stop tms-backend
+
+# Start a stopped process
+pm2 start tms-backend
+
+# View logs
+pm2 logs tms-backend
+pm2 logs tms-frontend
+
+# Monitor resources (CPU, Memory)
+pm2 monit
+
+# Delete a process from PM2
+pm2 delete tms-backend
+
+# Reload all processes
+pm2 reload all
+
+# Restart all processes
+pm2 restart all
+
+Accessing the Application
+=========================
+
+DEVELOPMENT MODE:
+1. Frontend (User Interface): http://localhost:5173
+2. Backend (API): http://localhost:5002
+
+PRODUCTION MODE:
+1. Frontend (User Interface): http://your-server-ip (or http://your-server-ip:3000)
+2. Backend (API): http://your-server-ip:5003
+
+Test the application:
+1. Open browser and go to the frontend URL
+2. You should see the login page
+3. Click "Signup" to create a new account
+4. Use the login form to access the system
+
+Troubleshooting Common Issues
+=============================
+
+Issue 1: "Port already in use"
+Solution:
+Choose some random port names which are not being used in any processes.
+
+Issue 6: "PM2 process not starting"
+Solution:
+1. Check if PM2 is installed: npm list -g pm2
+2. Reinstall PM2: npm uninstall -g pm2 && npm install -g pm2
+3. Check logs: pm2 logs
+4. Restart PM2: pm2 kill && pm2 start
+
+Issue 7: "Application not accessible from other computers"
+Solution:
+1. Check firewall settings - allow ports 80, 3000, 5003
+2. Check if server IP is correct
+3. Verify PM2 processes are running: pm2 status
+4. Check if application is bound to correct IP (not just localhost)
+
+Issue 2: "Module not found" errors
+Solution:
+# Delete node_modules and reinstall
+cd backend
+rmdir /s node_modules
+npm install
+
+cd ../frontend
+rmdir /s node_modules
+npm install
+
+Issue 3: "MongoDB connection failed"
+Solution:
+1. Check your MongoDB Atlas connection string
+2. Ensure your IP is whitelisted in MongoDB Atlas
+3. Verify username and password are correct
+
+Issue 4: "Email not working"
+Solution:
+1. Check Gmail app password is correct
+2. Ensure 2-Step Verification is enabled
+3. Verify ADMIN_USER email is correct
+
+Issue 5: "npm command not recognized"
+Solution:
+1. Reinstall Node.js
+2. Restart Command Prompt
+3. Check PATH environment variable
+
+Project Structure (For Reference)
+=================================
+
+Transportation-Management-System/
+├── backend/                 # Server-side code
+│   ├── models/             # Database models
+│   ├── routes/             # API endpoints
+│   ├── middleware/         # Authentication middleware
+│   ├── utils/              # Email and SMS utilities
+│   ├── Scheduler/          # Automated tasks
+│   ├── jwt/                # Token generation
+│   ├── package.json        # Backend dependencies
+│   └── .env               # Backend environment variables
+├── frontend/               # Client-side code
+│   ├── src/               # React source code
+│   ├── public/            # Static files
+│   ├── package.json       # Frontend dependencies
+│   └── .env              # Frontend environment variables
+├── package.json           # Root scripts
+└── README.md             # Main documentation
+
+Support Contacts
+================
+
+If you encounter issues:
+1. Check this guide first
+2. Check the main README.md file
+3. Contact the developer (+91 6351773853)
+4. Check console errors in browser (F12)
+5. Check PM2 logs: pm2 logs
+6. Check server firewall settings
+7. Verify network connectivity
+
+PRODUCTION SUPPORT:
+- Monitor application: pm2 monit
+- Check application status: pm2 status
+- View real-time logs: pm2 logs --lines 100
+- Restart if needed: pm2 restart all
+
+Final Checklist
+===============
+
+DEVELOPMENT MODE CHECKLIST:
+[ ] Node.js installed and working
+[ ] Git installed and working
+[ ] Project files downloaded
+[ ] Backend .env file configured
+[ ] Frontend .env file configured
+[ ] Backend dependencies installed
+[ ] Frontend dependencies installed
+[ ] Application starts without errors
+[ ] Frontend accessible at http://localhost:5173
+[ ] Backend API accessible at http://localhost:5002
+[ ] Can create account and login
+[ ] Can access employee/admin dashboard
+
+PRODUCTION MODE CHECKLIST:
+[ ] PM2 installed globally
+[ ] Frontend built for production (npm run build)
+[ ] Backend started with PM2
+[ ] Frontend served with PM2
+[ ] PM2 configuration saved
+[ ] PM2 startup configured
+[ ] Application accessible from other computers
+[ ] Firewall ports opened (80, 3000, 5003)
+[ ] Production environment variables set
+[ ] Database connection working
+[ ] Email notifications working
+[ ] Application survives server restart
+
+If all checkboxes are marked, the installation is successful! 
