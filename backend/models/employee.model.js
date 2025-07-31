@@ -23,7 +23,6 @@ const employeeSchema = new mongoose.Schema({
     department: {
         type: String,
         required: true,
-        enum: ['HR', 'ER', 'MECHANICAL', 'CIVIL', 'IT', 'CHEMICAL']
     },
     password: {
         type: String,

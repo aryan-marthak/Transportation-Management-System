@@ -114,22 +114,13 @@ const Signup = () => {
                         </div>
                         <div className="mb-4">
                             <label className="block mb-1 text-gray-700">Department</label>
-                            <select
+                            <input
+                                type="text"
                                 className="w-full px-4 py-2 border rounded bg-gray-50 focus:outline-none focus:ring focus:border-blue-300"
                                 value={department}
                                 onChange={(e) => setDepartment(e.target.value)}
-                            >
-                                <option value="" className="font-light text-gray-400">
-                                    Select your department
-                                </option>
-                                <option value="ER">ER</option>
-                                <option value="HR">HR</option>
-                                <option value="IT">IT</option>
-                                <option value="MECHANICAL">MECHANICAL</option>
-                                <option value="CIVIL">CIVIL</option>
-                                <option value="CHEMICAL">CHEMICAL</option>
-                                {/* Add more options as needed */}
-                            </select>
+                                placeholder="Enter your department"
+                            />
                             {errors.department && (
                                 <p className="text-red-500 text-sm mt-1">{errors.department}</p>
                             )}
