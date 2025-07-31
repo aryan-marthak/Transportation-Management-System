@@ -445,7 +445,9 @@ This document provides a comprehensive overview of all technologies, frameworks,
 ## 📞 Contact Information
 
 **Developer:** Aryan Marthak 
+
 **Email:** aryan.marthak1@gmail.com 
+
 **Repository:** https://github.com/aryan-marthak/Transportation-Management-System  
 
 ---
