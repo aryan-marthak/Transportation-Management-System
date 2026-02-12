@@ -28,7 +28,16 @@ router.post('/', secureRoute, async (req, res) => {
       createdBy: req.user._id
     });
 
+
     const savedTripRequest = await newTripRequest.save();
+
+    // Populate createdBy before emitting socket event
+    const populatedTripRequest = await tripRequest.findById(savedTripRequest._id).populate('createdBy');
+
+    // Emit socket event with populated data
+    const io = req.app.get('io');
+    if (io) io.emit('tripRequest:created', populatedTripRequest);
+
     res.status(201).json(savedTripRequest);
     // Send email to transport head in the background
     sendMail(
@@ -64,6 +73,7 @@ router.post('/:id/approve', adminRoute, async (req, res) => {
   try {
     const { vehicleId, driverId, remarks, isOutside, outsideVehicle, outsideDriver } = req.body;
     const tripRequestId = req.params.id;
+    const io = req.app.get('io');
 
     let vehicleDetails = {};
     if (isOutside) {
@@ -80,8 +90,14 @@ router.post('/:id/approve', adminRoute, async (req, res) => {
         return res.status(404).json({ message: 'Driver or Vehicle not found' });
       }
       // Correctly update vehicle and driver status
-      await vehicleModel.findByIdAndUpdate(vehicleId, { status: 'Assigned' });
-      await driverModel.findByIdAndUpdate(driverId, { status: 'assigned' });
+      const updatedVehicle = await vehicleModel.findByIdAndUpdate(vehicleId, { status: 'Assigned' }, { new: true });
+      const updatedDriver = await driverModel.findByIdAndUpdate(driverId, { status: 'assigned' }, { new: true });
+
+      // Emit socket events for vehicle and driver updates
+      if (io) {
+        io.emit('vehicle:updated', updatedVehicle);
+        io.emit('driver:updated', updatedDriver);
+      }
       vehicleDetails = {
         driverName: driver.driverName,
         vehicleId: vehicle._id,
@@ -103,6 +119,9 @@ router.post('/:id/approve', adminRoute, async (req, res) => {
       },
       { new: true }
     ).populate('createdBy');
+
+    // Emit socket event
+    if (io) io.emit('tripRequest:updated', updatedTrip);
 
     res.status(200).json(updatedTrip);
 
@@ -152,6 +171,10 @@ router.post('/:id/reject', adminRoute, async (req, res) => {
       { new: true }
     ).populate('createdBy');
 
+    // Emit socket event
+    const io = req.app.get('io');
+    if (io) io.emit('tripRequest:updated', updatedTrip);
+
     res.status(200).json(updatedTrip);
 
     // Send email to the user who created the trip request in the background
@@ -178,7 +201,7 @@ router.post('/:id/reject', adminRoute, async (req, res) => {
 router.post('/:id/complete', adminRoute, async (req, res) => {
   try {
     const tripRequestId = req.params.id;
-    const trip = await tripRequest.findById(tripRequestId);
+    const trip = await tripRequest.findById(tripRequestId).populate('createdBy');
     if (!trip) {
       return res.status(404).json({ message: 'Trip request not found' });
     }
@@ -187,12 +210,19 @@ router.post('/:id/complete', adminRoute, async (req, res) => {
     await trip.save();
 
     // Set driver and vehicle back to available using IDs if present
+    const io = req.app.get('io');
     if (trip.vehicleDetails?.driverId) {
-      await driverModel.findByIdAndUpdate(trip.vehicleDetails.driverId, { status: 'available' });
+      const freedDriver = await driverModel.findByIdAndUpdate(trip.vehicleDetails.driverId, { status: 'available' }, { new: true });
+      if (io && freedDriver) io.emit('driver:updated', freedDriver);
     }
     if (trip.vehicleDetails?.vehicleId) {
-      await vehicleModel.findByIdAndUpdate(trip.vehicleDetails.vehicleId, { status: 'Available' });
+      const freedVehicle = await vehicleModel.findByIdAndUpdate(trip.vehicleDetails.vehicleId, { status: 'Available' }, { new: true });
+      if (io && freedVehicle) io.emit('vehicle:updated', freedVehicle);
     }
+
+    // Emit socket event
+    if (io) io.emit('tripRequest:updated', trip);
+
     res.status(200).json({ message: 'Trip marked as completed', trip });
   } catch (error) {
     res.status(500).json({ message: 'Error completing trip request', error: error.message });

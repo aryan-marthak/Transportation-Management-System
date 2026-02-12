@@ -27,6 +27,13 @@ router.post('/', adminRoute, async (req, res) => {
     });
 
     const savedVehicle = await newVehicle.save();
+
+    // Emit socket event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('vehicle:created', savedVehicle);
+    }
+
     res.status(201).json(savedVehicle);
   } catch (error) {
     res.status(500).json({ message: 'Error creating vehicle', error: error.message });
@@ -41,6 +48,12 @@ router.delete('/:id', adminRoute, async (req, res) => {
 
     if (!deletedVehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    // Emit socket event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('vehicle:deleted', { _id: id });
     }
 
     res.status(200).json({ message: 'Vehicle deleted successfully' });
@@ -62,6 +75,13 @@ router.patch('/:id/toggleStatus', adminRoute, async (req, res) => {
     if (!updatedVehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
+
+    // Emit socket event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('vehicle:updated', updatedVehicle);
+    }
+
     res.status(200).json(updatedVehicle);
   } catch (error) {
     res.status(500).json({ message: 'Error updating vehicle out of service status', error: error.message });

@@ -79,12 +79,11 @@ const AdminDashboard = () => {
   const { tripRequests, fetchTripRequests, approveTripRequest, rejectTripRequest, completeTripRequest, loading: tripRequestsLoading, error: tripRequestsError } = useTripRequestStore();
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchDrivers();
-      fetchVehicles();
-      fetchTripRequests();
-    }, 2000);
-    return () => clearInterval(interval);
+    // Initial fetch on mount
+    fetchDrivers();
+    fetchVehicles();
+    fetchTripRequests();
+    // WebSocket listeners will handle real-time updates
   }, []);
 
   // CRUD handlers for vehicles and drivers

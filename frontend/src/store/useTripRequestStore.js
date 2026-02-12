@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_ENDPOINTS } from '../utils/config.js';
+import socket from '../utils/socket.js';
 
 const useTripRequestStore = create((set) => ({
   tripRequests: [],
@@ -28,11 +29,8 @@ const useTripRequestStore = create((set) => ({
         body: JSON.stringify(tripRequest),
       });
       if (!res.ok) throw new Error('Failed to add trip request');
-      const newTripRequest = await res.json();
-      set((state) => ({
-        tripRequests: [newTripRequest, ...state.tripRequests],
-        loading: false,
-      }));
+      // Socket will handle adding to state
+      set({ loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -48,8 +46,8 @@ const useTripRequestStore = create((set) => ({
         body: JSON.stringify({ vehicleId, driverId, remarks, isOutside, outsideVehicle, outsideDriver }),
       });
       if (!res.ok) throw new Error('Failed to approve trip request');
+      // Socket will handle updating state
       set({ loading: false });
-      // Optionally, refetch or update state
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -65,8 +63,8 @@ const useTripRequestStore = create((set) => ({
         body: JSON.stringify({ remarks }),
       });
       if (!res.ok) throw new Error('Failed to reject trip request');
+      // Socket will handle updating state
       set({ loading: false });
-      // Optionally, refetch or update state
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -81,8 +79,8 @@ const useTripRequestStore = create((set) => ({
         headers: { 'Content-Type': 'application/json' },
       });
       if (!res.ok) throw new Error('Failed to complete trip request');
+      // Socket will handle updating state
       set({ loading: false });
-      // Optionally, refetch or update state
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -90,5 +88,20 @@ const useTripRequestStore = create((set) => ({
 
   // Add deleteTripRequest, updateTripRequest, etc. as needed
 }));
+
+// Socket event listeners
+socket.on('tripRequest:created', (tripRequest) => {
+  useTripRequestStore.setState((state) => ({
+    tripRequests: [tripRequest, ...state.tripRequests],
+  }));
+});
+
+socket.on('tripRequest:updated', (updatedTripRequest) => {
+  useTripRequestStore.setState((state) => ({
+    tripRequests: state.tripRequests.map((tr) =>
+      tr._id === updatedTripRequest._id ? updatedTripRequest : tr
+    ),
+  }));
+});
 
 export default useTripRequestStore; 

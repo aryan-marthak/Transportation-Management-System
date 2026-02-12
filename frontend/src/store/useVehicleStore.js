@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_ENDPOINTS } from '../utils/config.js';
+import socket from '../utils/socket.js';
 
 const useVehicleStore = create((set) => ({
   vehicles: [],
@@ -31,10 +32,8 @@ const useVehicleStore = create((set) => ({
       });
       if (!res.ok) throw new Error('Failed to add vehicle');
       const newVehicle = await res.json();
-      set((state) => ({
-        vehicles: [...state.vehicles, newVehicle],
-        loading: false,
-      }));
+      // Socket will handle adding to state
+      set({ loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -48,10 +47,8 @@ const useVehicleStore = create((set) => ({
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete vehicle');
-      set((state) => ({
-        vehicles: state.vehicles.filter((v) => v._id !== vehicleId),
-        loading: false,
-      }));
+      // Socket will handle removing from state
+      set({ loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -59,6 +56,27 @@ const useVehicleStore = create((set) => ({
 
   // Add updateVehicle, etc. as needed
 }));
+
+// Socket event listeners
+socket.on('vehicle:created', (vehicle) => {
+  useVehicleStore.setState((state) => ({
+    vehicles: [...state.vehicles, vehicle],
+  }));
+});
+
+socket.on('vehicle:updated', (updatedVehicle) => {
+  useVehicleStore.setState((state) => ({
+    vehicles: state.vehicles.map((v) =>
+      v._id === updatedVehicle._id ? updatedVehicle : v
+    ),
+  }));
+});
+
+socket.on('vehicle:deleted', ({ _id }) => {
+  useVehicleStore.setState((state) => ({
+    vehicles: state.vehicles.filter((v) => v._id !== _id),
+  }));
+});
 
 useVehicleStore.toggleVehicleOutOfService = async (vehicleId, outOfService) => {
   useVehicleStore.setState({ loading: true, error: null });
@@ -70,11 +88,8 @@ useVehicleStore.toggleVehicleOutOfService = async (vehicleId, outOfService) => {
       body: JSON.stringify({ outOfService }),
     });
     if (!res.ok) throw new Error('Failed to update vehicle status');
-    const updatedVehicle = await res.json();
-    useVehicleStore.setState((state) => ({
-      vehicles: state.vehicles.map((v) => v._id === vehicleId ? updatedVehicle : v),
-      loading: false,
-    }));
+    // Socket will handle updating state
+    useVehicleStore.setState({ loading: false });
   } catch (err) {
     useVehicleStore.setState({ error: err.message, loading: false });
   }

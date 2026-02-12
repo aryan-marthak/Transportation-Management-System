@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { API_ENDPOINTS } from '../utils/config.js';
+import socket from '../utils/socket.js';
 
 const useDriverStore = create((set) => ({
   drivers: [],
@@ -30,11 +31,8 @@ const useDriverStore = create((set) => ({
         body: JSON.stringify(driver),
       });
       if (!res.ok) throw new Error('Failed to add driver');
-      const newDriver = await res.json();
-      set((state) => ({
-        drivers: [...state.drivers, newDriver],
-        loading: false,
-      }));
+      // Socket will handle adding to state
+      set({ loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -48,10 +46,8 @@ const useDriverStore = create((set) => ({
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete driver');
-      set((state) => ({
-        drivers: state.drivers.filter((d) => d._id !== driverId),
-        loading: false,
-      }));
+      // Socket will handle removing from state
+      set({ loading: false });
     } catch (err) {
       set({ error: err.message, loading: false });
     }
@@ -59,6 +55,27 @@ const useDriverStore = create((set) => ({
 
   // Add updateDriver, etc. as needed
 }));
+
+// Socket event listeners
+socket.on('driver:created', (driver) => {
+  useDriverStore.setState((state) => ({
+    drivers: [...state.drivers, driver],
+  }));
+});
+
+socket.on('driver:updated', (updatedDriver) => {
+  useDriverStore.setState((state) => ({
+    drivers: state.drivers.map((d) =>
+      d._id === updatedDriver._id ? updatedDriver : d
+    ),
+  }));
+});
+
+socket.on('driver:deleted', ({ _id }) => {
+  useDriverStore.setState((state) => ({
+    drivers: state.drivers.filter((d) => d._id !== _id),
+  }));
+});
 
 // Add toggleDriverUnavailable method
 useDriverStore.toggleDriverUnavailable = async (driverId, temporarilyUnavailable) => {
@@ -71,11 +88,8 @@ useDriverStore.toggleDriverUnavailable = async (driverId, temporarilyUnavailable
       body: JSON.stringify({ temporarilyUnavailable }),
     });
     if (!res.ok) throw new Error('Failed to update driver status');
-    const updatedDriver = await res.json();
-    useDriverStore.setState((state) => ({
-      drivers: state.drivers.map((d) => d._id === driverId ? updatedDriver : d),
-      loading: false,
-    }));
+    // Socket will handle updating state
+    useDriverStore.setState({ loading: false });
   } catch (err) {
     useDriverStore.setState({ error: err.message, loading: false });
   }

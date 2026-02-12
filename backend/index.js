@@ -1,4 +1,6 @@
 import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -12,10 +14,32 @@ import tripRequestRoutes from "./routes/trip.request.js";
 import './Scheduler/scheduler.js'; // Import the scheduler
 
 const app = express();
+const httpServer = createServer(app);
 dotenv.config();
 
 const URI = process.env.MONGODB_URI;
 const PORT = process.env.PORT || 5002;
+
+// Initialize Socket.io with CORS
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST"]
+  }
+});
+
+// Make io accessible to routes
+app.set('io', io);
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
 
 // Security: Add helmet for secure HTTP headers
 app.use(helmet());
@@ -53,10 +77,13 @@ app.use('/api/tripRequest', tripRequestRoutes);
 mongoose.connect(URI)
   .then(() => {
     console.log("MongoDB Connected!");
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
+      console.log(`WebSocket server ready`);
     });
   })
   .catch((error) => {
     console.log(error);
   });
+
+export { io };

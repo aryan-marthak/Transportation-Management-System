@@ -28,6 +28,11 @@ router.post('/', adminRoute, async (req, res) => {
     });
 
     const savedDriver = await newDriver.save();
+
+    // Emit socket event
+    const io = req.app.get('io');
+    if (io) io.emit('driver:created', savedDriver);
+
     res.status(201).json(savedDriver);
   } catch (error) {
     res.status(500).json({ message: 'Error creating driver', error: error.message });
@@ -43,6 +48,10 @@ router.delete('/:id', adminRoute, async (req, res) => {
     if (!deletedDriver) {
       return res.status(404).json({ message: 'Driver not found' });
     }
+
+    // Emit socket event
+    const io = req.app.get('io');
+    if (io) io.emit('driver:deleted', { _id: id });
 
     res.status(200).json({ message: 'Driver deleted successfully' });
   } catch (error) {
@@ -63,6 +72,11 @@ router.patch('/:id/toggleUnavailable', adminRoute, async (req, res) => {
     if (!updatedDriver) {
       return res.status(404).json({ message: 'Driver not found' });
     }
+
+    // Emit socket event
+    const io = req.app.get('io');
+    if (io) io.emit('driver:updated', updatedDriver);
+
     res.status(200).json(updatedDriver);
   } catch (error) {
     res.status(500).json({ message: 'Error updating driver status', error: error.message });
