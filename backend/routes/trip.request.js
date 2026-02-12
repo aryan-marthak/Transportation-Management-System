@@ -1,6 +1,7 @@
 import express from "express";
 import tripRequest from "../models/trip.request.model.js"
 import secureRoute from "../middleware/secureRoute.js";
+import adminRoute from "../middleware/adminRoute.js";
 import driverModel from "../models/driver.model.js";
 import vehicleModel from "../models/vehicle.model.js";
 import { sendMail } from '../utils/mailer.js';
@@ -11,55 +12,55 @@ const router = express.Router();
 // POST REQUEST FOR CREATING NEW TRIP
 
 router.post('/', secureRoute, async (req, res) => {
-    try {
-        const { purpose, designation, destination, pickupPoint, startDate, startTime, endDate, numberOfPassengers, remarks } = req.body;
+  try {
+    const { purpose, designation, destination, pickupPoint, startDate, startTime, endDate, numberOfPassengers, remarks } = req.body;
 
-        const newTripRequest = new tripRequest({
-            purpose,
-            designation,
-            destination,
-            pickupPoint,
-            startDate: new Date(startDate),
-            startTime,
-            endDate: new Date(endDate),
-            numberOfPassengers: parseInt(numberOfPassengers),
-            remarks: remarks || '',
-            createdBy: req.user._id
-        });
+    const newTripRequest = new tripRequest({
+      purpose,
+      designation,
+      destination,
+      pickupPoint,
+      startDate: new Date(startDate),
+      startTime,
+      endDate: new Date(endDate),
+      numberOfPassengers: parseInt(numberOfPassengers),
+      remarks: remarks || '',
+      createdBy: req.user._id
+    });
 
-        const savedTripRequest = await newTripRequest.save();
-        res.status(201).json(savedTripRequest);
-        // Send email to transport head in the background
-        sendMail(
-            process.env.TRANSPORT_HEAD_EMAIL ,
-            'New Trip Request Created',
-            `A new trip request has been created by ${req.user.name}, (${req.user.email}), ${req.user.phoneNo}.\n\nDestination: ${destination}\nPurpose: ${purpose}\nDepartment: ${req.user.department}\nPickup Point: ${pickupPoint}\nStart: ${startDate}, ${startTime}\nEnd: ${endDate}\nNumber of Passengers: ${numberOfPassengers}\nRemarks: ${remarks || 'None'}\n\nPlease review the request in the system.`
-        ).catch(mailError => {
-            console.error('Failed to send trip request notification to transport head:', mailError);
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Error creating trip request', error: error.message });
-    }
+    const savedTripRequest = await newTripRequest.save();
+    res.status(201).json(savedTripRequest);
+    // Send email to transport head in the background
+    sendMail(
+      process.env.TRANSPORT_HEAD_EMAIL,
+      'New Trip Request Created',
+      `A new trip request has been created by ${req.user.name}, (${req.user.email}), ${req.user.phoneNo}.\n\nDestination: ${destination}\nPurpose: ${purpose}\nDepartment: ${req.user.department}\nPickup Point: ${pickupPoint}\nStart: ${startDate}, ${startTime}\nEnd: ${endDate}\nNumber of Passengers: ${numberOfPassengers}\nRemarks: ${remarks || 'None'}\n\nPlease review the request in the system.`
+    ).catch(mailError => {
+      console.error('Failed to send trip request notification to transport head:', mailError);
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error creating trip request', error: error.message });
+  }
 });
 
 // GET REQUEST FOR GETTING ALL THE TRIPS
 
 router.get('/', secureRoute, async (req, res) => {
-    try {
-        let trips;
-        if (req.user.role === 'admin') {
-            trips = await tripRequest.find({}).populate('createdBy');
-        } else {
-            trips = await tripRequest.find({ createdBy: req.user._id }).populate('createdBy');
-        }
-        res.status(200).json(trips);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching trips', error: error.message });
+  try {
+    let trips;
+    if (req.user.role === 'admin') {
+      trips = await tripRequest.find({}).populate('createdBy');
+    } else {
+      trips = await tripRequest.find({ createdBy: req.user._id }).populate('createdBy');
     }
+    res.status(200).json(trips);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching trips', error: error.message });
+  }
 });
 
-// APPROVE AND ASSIGN VEHICLE/DRIVER TO TRIP REQUEST
-router.post('/:id/approve', secureRoute, async (req, res) => {
+// APPROVE AND ASSIGN VEHICLE/DRIVER TO TRIP REQUEST - Admin only
+router.post('/:id/approve', adminRoute, async (req, res) => {
   try {
     const { vehicleId, driverId, remarks, isOutside, outsideVehicle, outsideDriver } = req.body;
     const tripRequestId = req.params.id;
@@ -135,8 +136,8 @@ router.post('/:id/approve', secureRoute, async (req, res) => {
   }
 });
 
-// REJECT TRIP REQUEST
-router.post('/:id/reject', secureRoute, async (req, res) => {
+// REJECT TRIP REQUEST - Admin only
+router.post('/:id/reject', adminRoute, async (req, res) => {
   try {
     const { remarks } = req.body;
     const tripRequestId = req.params.id;
@@ -173,8 +174,8 @@ router.post('/:id/reject', secureRoute, async (req, res) => {
   }
 });
 
-// COMPLETE TRIP REQUEST MANUALLY
-router.post('/:id/complete', secureRoute, async (req, res) => {
+// COMPLETE TRIP REQUEST MANUALLY - Admin only
+router.post('/:id/complete', adminRoute, async (req, res) => {
   try {
     const tripRequestId = req.params.id;
     const trip = await tripRequest.findById(tripRequestId);

@@ -9,7 +9,9 @@ const useVehicleStore = create((set) => ({
   fetchVehicles: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(API_ENDPOINTS.VEHICLES);
+      const res = await fetch(API_ENDPOINTS.VEHICLES, {
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch vehicles');
       const data = await res.json();
       set({ vehicles: data, loading: false });
@@ -24,6 +26,7 @@ const useVehicleStore = create((set) => ({
       const res = await fetch(API_ENDPOINTS.VEHICLES, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(vehicle),
       });
       if (!res.ok) throw new Error('Failed to add vehicle');
@@ -42,6 +45,7 @@ const useVehicleStore = create((set) => ({
     try {
       const res = await fetch(`${API_ENDPOINTS.VEHICLES}/${vehicleId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete vehicle');
       set((state) => ({
@@ -62,6 +66,7 @@ useVehicleStore.toggleVehicleOutOfService = async (vehicleId, outOfService) => {
     const res = await fetch(API_ENDPOINTS.VEHICLE_TOGGLE_STATUS(vehicleId), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ outOfService }),
     });
     if (!res.ok) throw new Error('Failed to update vehicle status');

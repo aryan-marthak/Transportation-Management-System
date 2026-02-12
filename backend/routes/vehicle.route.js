@@ -1,9 +1,10 @@
 import express from 'express';
 import Vehicle from '../models/vehicle.model.js';
+import adminRoute from '../middleware/adminRoute.js';
 
 const router = express.Router();
 
-// GET all vehicles
+// GET all vehicles - Public (needed for UI to display available vehicles)
 router.get('/', async (req, res) => {
   try {
     const vehicles = await Vehicle.find({});
@@ -13,11 +14,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST create new vehicle
-router.post('/', async (req, res) => {
+// POST create new vehicle - Admin only
+router.post('/', adminRoute, async (req, res) => {
   try {
     const { vehicleName, capacity, vehicleNo, vehicleColor } = req.body;
-    
+
     const newVehicle = new Vehicle({
       vehicleName,
       capacity: parseInt(capacity),
@@ -32,24 +33,24 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE vehicle by ID
-router.delete('/:id', async (req, res) => {
+// DELETE vehicle by ID - Admin only
+router.delete('/:id', adminRoute, async (req, res) => {
   try {
     const { id } = req.params;
     const deletedVehicle = await Vehicle.findByIdAndDelete(id);
-    
+
     if (!deletedVehicle) {
       return res.status(404).json({ message: 'Vehicle not found' });
     }
-    
+
     res.status(200).json({ message: 'Vehicle deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting vehicle', error: error.message });
   }
 });
 
-// PATCH update vehicle out of service status
-router.patch('/:id/toggleStatus', async (req, res) => {
+// PATCH update vehicle out of service status - Admin only
+router.patch('/:id/toggleStatus', adminRoute, async (req, res) => {
   try {
     const { id } = req.params;
     const { outOfService } = req.body;

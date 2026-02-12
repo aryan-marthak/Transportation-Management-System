@@ -32,11 +32,26 @@ const Signup = () => {
         if (!employeeId) newErrors.employeeId = "Employee ID is required";
         if (!name) newErrors.name = "Name is required";
         if (!email) newErrors.email = "Email is required";
-        else if (!email.endsWith("@adityabirla.com")) newErrors.email = "Only @adityabirla.com emails are allowed";
+        else {
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                newErrors.email = "Invalid email format";
+            }
+        }
         if (!department) newErrors.department = "Department is required";
         if (!phoneNo) newErrors.phoneNo = "Mobile number is required";
         else if (!/^\d{10}$/.test(phoneNo)) newErrors.phoneNo = "Enter a valid 10-digit mobile number";
         if (!password) newErrors.password = "Password is required";
+        else if (password.length < 8) {
+            newErrors.password = "Password must be at least 8 characters long";
+        } else {
+            // Validate password strength
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+            if (!passwordRegex.test(password)) {
+                newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+            }
+        }
         if (!confirmPassword) newErrors.confirmPassword = "Password is required";
         if (password !== confirmPassword) newErrors.confirmPassword = "Passwords do not match";
         if (Object.keys(newErrors).length > 0) {

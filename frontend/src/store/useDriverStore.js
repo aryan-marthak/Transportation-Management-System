@@ -9,7 +9,9 @@ const useDriverStore = create((set) => ({
   fetchDrivers: async () => {
     set({ loading: true, error: null });
     try {
-      const res = await fetch(API_ENDPOINTS.DRIVERS);
+      const res = await fetch(API_ENDPOINTS.DRIVERS, {
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch drivers');
       const data = await res.json();
       set({ drivers: data, loading: false });
@@ -24,6 +26,7 @@ const useDriverStore = create((set) => ({
       const res = await fetch(API_ENDPOINTS.DRIVERS, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(driver),
       });
       if (!res.ok) throw new Error('Failed to add driver');
@@ -42,6 +45,7 @@ const useDriverStore = create((set) => ({
     try {
       const res = await fetch(`${API_ENDPOINTS.DRIVERS}/${driverId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete driver');
       set((state) => ({
@@ -63,6 +67,7 @@ useDriverStore.toggleDriverUnavailable = async (driverId, temporarilyUnavailable
     const res = await fetch(API_ENDPOINTS.DRIVER_TOGGLE_UNAVAILABLE(driverId), {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       body: JSON.stringify({ temporarilyUnavailable }),
     });
     if (!res.ok) throw new Error('Failed to update driver status');

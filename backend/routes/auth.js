@@ -22,16 +22,32 @@ router.post('/signup', async (req, res) => {
     if (!employeeId || !name || !email || !password || !department) {
         return res.status(400).json({ error: 'All fields are required.' });
     }
-    if (!email.endsWith('@adityabirla.com')) {
-        return res.status(400).json({ error: 'Only @adityabirla.com emails are allowed.' });
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format.' });
     }
+
+    // Validate password strength (min 8 chars, at least 1 uppercase, 1 lowercase, 1 number)
+    if (password.length < 8) {
+        return res.status(400).json({ error: 'Password must be at least 8 characters long.' });
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
+    if (!passwordRegex.test(password)) {
+        return res.status(400).json({ error: 'Password must contain at least one uppercase letter, one lowercase letter, and one number.' });
+    }
+
     const existingEmployee = await Employee.findOne({ $or: [{ email }, { employeeId }] });
     if (existingEmployee) {
         return res.status(400).json({ error: 'Employee already exists.' });
     }
     try {
         const otp = generateOtp();
-        console.log('OTP for', email, 'is', otp); // TEMP: Log OTP for testing
+        // Security: Do NOT log OTP in production
+        if (process.env.NODE_ENV === 'development') {
+            console.log('OTP for', email, 'is', otp);
+        }
         pendingSignups[email] = {
             employeeId,
             name,
@@ -133,7 +149,7 @@ router.post('/logout', (req, res) => {
         sameSite: 'none',
         path: '/',
         partitioned: true,
-    }); 
+    });
     res.json({ message: 'Logged out' });
 });
 

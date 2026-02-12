@@ -1,9 +1,10 @@
 import express from 'express';
 import Driver from '../models/driver.model.js';
+import adminRoute from '../middleware/adminRoute.js';
 
 const router = express.Router();
 
-// GET all drivers
+// GET all drivers - Public (needed for UI to display available drivers)
 router.get('/', async (req, res) => {
   try {
     const drivers = await Driver.find({});
@@ -13,11 +14,11 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST create new driver
-router.post('/', async (req, res) => {
+// POST create new driver - Admin only
+router.post('/', adminRoute, async (req, res) => {
   try {
     const { driverName, age, phoneNo, licenseNo, status } = req.body;
-    
+
     const newDriver = new Driver({
       driverName,
       age,
@@ -33,24 +34,24 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE driver by ID
-router.delete('/:id', async (req, res) => {
+// DELETE driver by ID - Admin only
+router.delete('/:id', adminRoute, async (req, res) => {
   try {
     const { id } = req.params;
     const deletedDriver = await Driver.findByIdAndDelete(id);
-    
+
     if (!deletedDriver) {
       return res.status(404).json({ message: 'Driver not found' });
     }
-    
+
     res.status(200).json({ message: 'Driver deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting driver', error: error.message });
   }
 });
 
-// PATCH toggle temporarilyUnavailable status
-router.patch('/:id/toggleUnavailable', async (req, res) => {
+// PATCH toggle temporarilyUnavailable status - Admin only
+router.patch('/:id/toggleUnavailable', adminRoute, async (req, res) => {
   try {
     const { id } = req.params;
     const { temporarilyUnavailable } = req.body;
