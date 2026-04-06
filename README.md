@@ -18,6 +18,29 @@ This Transportation Management System (TMS) is designed for organizations to eff
 
 ---
 
+## 🔑 Demo Credentials
+
+> **Want to try the app?** Use the demo credentials below **or** sign up your own employee account through the registration page.
+
+| Role | Email | Employee ID | Password |
+|------|-------|-------------|----------|
+| **Admin** | `admin@demo.com` | `ADMIN001` | `Admin@123` |
+| **Employee** | `employee@demo.com` | `EMP001` | `Employee@123` |
+
+> [!TIP]
+> You can also **create your own account** using the Signup page — just provide an Employee ID, name, email, department, and password. New accounts are created with the **Employee** role by default.
+
+> [!NOTE]
+> - The **Admin** account has full access to fleet management, request approvals, driver/vehicle management, and data exports.
+> - The **Employee** account can create trip requests, track active requests, and view past request history.
+> - **First-time setup?** Run the seed command to create the demo accounts:
+>   ```bash
+>   cd backend
+>   npm run seed
+>   ```
+
+---
+
 ## 🏗️ Architecture
 
 ### Backend Architecture
